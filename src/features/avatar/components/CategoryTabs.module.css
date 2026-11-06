@@ -1,0 +1,51 @@
+.tabsContainer {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 10px 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabsContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.tabItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill, 9999px);
+  border: 2px solid var(--color-neutral-200, #e2e8f0);
+  background-color: var(--color-bg-surface, #ffffff);
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: var(--text-sm, 0.95rem);
+  font-weight: 700;
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 44px;
+  transition: all 0.18s var(--motion-easing-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.tabItem:hover {
+  border-color: var(--color-outline, #1f1b24);
+  color: var(--color-text, #1f1b24);
+  transform: translateY(-2px);
+}
+
+.tabItemActive {
+  background-color: var(--color-brand-100, #a7f3d0);
+  border-color: var(--color-outline, #1f1b24);
+  color: var(--color-text, #1f1b24);
+  box-shadow: 0 4px 0 var(--color-outline, #1f1b24);
+  transform: translateY(-2px);
+}
+
+.tabIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

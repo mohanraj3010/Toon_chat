@@ -1,0 +1,34 @@
+.flyingContainer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.flyingEmoji {
+  position: absolute;
+  bottom: 80px;
+  animation: floatUp 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+  will-change: transform, opacity;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) scale(0.6) rotate(0deg);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(-80px) scale(1.4) rotate(var(--rot, 10deg));
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-220px) scale(1.1) rotate(calc(var(--rot, 10deg) * -1));
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-380px) scale(0.8) rotate(var(--rot, 10deg));
+    opacity: 0;
+  }
+}

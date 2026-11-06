@@ -1,0 +1,41 @@
+.avatarSvg {
+  display: block;
+  user-select: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.avatarBreathe {
+  transform-origin: 100px 220px;
+  animation: avatarBreatheAnimation 3.6s ease-in-out infinite;
+}
+
+.avatarBlink {
+  animation: avatarBlinkAnimation 4.2s infinite ease-in-out;
+  transform-origin: 100px 104px;
+}
+
+@keyframes avatarBreatheAnimation {
+  0%, 100% {
+    transform: translateY(0px) scale(1, 1);
+  }
+  50% {
+    transform: translateY(-2.2px) scale(1.008, 1.018);
+  }
+}
+
+@keyframes avatarBlinkAnimation {
+  0%, 94%, 100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatarBreathe,
+  .avatarBlink {
+    animation: none !important;
+  }
+}

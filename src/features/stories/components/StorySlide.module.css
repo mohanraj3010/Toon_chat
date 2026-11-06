@@ -1,0 +1,204 @@
+.slideContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  user-select: none;
+}
+
+/* Background patterns */
+.pattern-dots {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 2px, transparent 2px);
+  background-size: 20px 20px;
+}
+
+.pattern-stars {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.35) 2px, transparent 2px),
+                    radial-gradient(rgba(0, 0, 0, 0.06) 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+
+.pattern-stripes {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0.15) 15px,
+    transparent 15px,
+    transparent 30px
+  );
+}
+
+.pattern-clouds {
+  background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4) 10px, transparent 11px);
+  background-size: 40px 40px;
+}
+
+.pattern-hearts {
+  background-image: radial-gradient(rgba(244, 63, 94, 0.12) 3px, transparent 3px);
+  background-size: 24px 24px;
+}
+
+.pattern-solid {
+  background-image: none;
+}
+
+/* Expression story style */
+.expressionStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  gap: 16px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.avatarBounce {
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.16));
+  animation: toonFloat 3s ease-in-out infinite;
+}
+
+@keyframes toonFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.cartoonSpeechBubble {
+  position: relative;
+  background: #ffffff;
+  border: 3px solid #1e293b;
+  border-radius: 22px;
+  padding: 16px 20px;
+  box-shadow: 0 6px 0 #1e293b, 0 12px 20px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  max-width: 90%;
+  animation: bubblePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cartoonSpeechBubble::after {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 14px solid #1e293b;
+}
+
+.cartoonSpeechBubble::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 11px solid #ffffff;
+  z-index: 1;
+}
+
+.bubbleText {
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #1e293b;
+  margin: 0;
+  word-break: break-word;
+}
+
+/* Sticker story style */
+.stickerStage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+  padding: 20px 0;
+}
+
+.stickerHeadline {
+  background: #ffffff;
+  border: 3.5px solid #1e293b;
+  border-radius: 20px;
+  padding: 14px 22px;
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1e293b;
+  box-shadow: 0 6px 0 #1e293b, 0 12px 24px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  margin: 0 auto;
+  max-width: 88%;
+}
+
+.placedSticker {
+  position: absolute;
+  filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.15));
+  animation: stickerPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: default;
+}
+
+@keyframes stickerPop {
+  0% {
+    transform: scale(0.2) rotate(0deg);
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Text on color story style */
+.textStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 20px;
+  text-align: center;
+}
+
+.bigCartoonText {
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+  margin: 0;
+  word-break: break-word;
+}
+
+@keyframes bubblePop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

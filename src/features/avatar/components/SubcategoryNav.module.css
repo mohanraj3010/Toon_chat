@@ -1,0 +1,41 @@
+.subcatContainer {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 8px 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.subcatContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.subcatChip {
+  background-color: var(--color-bg-base, #f8fafc);
+  border: 1.5px solid var(--color-neutral-300, #cbd5e1);
+  border-radius: var(--radius-pill, 9999px);
+  padding: 6px 14px;
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: var(--text-xs, 0.85rem);
+  font-weight: 600;
+  color: var(--color-text-muted, #475569);
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.subcatChip:hover {
+  border-color: var(--color-outline, #1f1b24);
+  color: var(--color-text, #1f1b24);
+}
+
+.subcatChipActive {
+  background-color: var(--color-neutral-800, #1e293b);
+  border-color: var(--color-neutral-800, #1e293b);
+  color: #ffffff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}

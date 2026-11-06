@@ -1,0 +1,291 @@
+/* ToonChat Voice Recorder Styles
+   Chunky outlines, rounded cartoon surfaces, micro-animations, accessible touch targets (>=44px)
+*/
+
+.voice-recorder-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--spacing-2, 8px) var(--spacing-3, 12px);
+  background-color: var(--color-bg-surface, #ffffff);
+  border: 2px solid var(--color-outline, #1e293b);
+  border-radius: 24px;
+  box-shadow: 2px 2px 0px var(--color-outline, #1e293b);
+  gap: var(--spacing-3, 12px);
+  animation: popIn 180ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  position: relative;
+  box-sizing: border-box;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Status Indicator Dot */
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pulsing-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color-danger, #ef4444);
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulseDot 1.4s infinite cubic-bezier(0.455, 0.03, 0.515, 0.955);
+}
+
+.paused-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color-warning, #f59e0b);
+}
+
+@keyframes pulseDot {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 7px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* Timer Display */
+.recording-timer {
+  font-family: var(--font-display, Fredoka, cursive, sans-serif);
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-base, #1e293b);
+  white-space: nowrap;
+}
+
+.timer-warning {
+  color: var(--color-danger, #ef4444);
+  animation: timerBlink 800ms infinite ease-in-out;
+}
+
+@keyframes timerBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Animated Waveform Level Bars */
+.level-meter-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 32px;
+  flex: 1;
+  padding: 0 4px;
+  overflow: hidden;
+}
+
+.level-bar {
+  width: 3.5px;
+  min-height: 4px;
+  max-height: 28px;
+  border-radius: 3px;
+  background-color: var(--color-brand-500, #ea580c);
+  transition: height 60ms ease-out, background-color 150ms ease;
+}
+
+.level-bar-paused {
+  background-color: var(--color-outline-dim, #cbd5e1);
+}
+
+/* Button Controls */
+.action-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.recorder-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--color-outline, #1e293b);
+  background-color: var(--color-bg-surface, #ffffff);
+  color: var(--color-text-base, #1e293b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 100ms ease, background-color 120ms ease, box-shadow 100ms ease;
+  box-shadow: 1.5px 1.5px 0px var(--color-outline, #1e293b);
+  padding: 0;
+}
+
+.recorder-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 2.5px 2.5px 0px var(--color-outline, #1e293b);
+}
+
+.recorder-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0.5px 0.5px 0px var(--color-outline, #1e293b);
+}
+
+.recorder-btn:focus-visible {
+  outline: 3px solid var(--color-brand-400, #fb923c);
+  outline-offset: 2px;
+}
+
+.btn-cancel {
+  background-color: var(--color-bg-muted, #f1f5f9);
+  color: var(--color-danger, #ef4444);
+}
+
+.btn-cancel:hover {
+  background-color: #fee2e2;
+}
+
+.btn-stop {
+  background-color: var(--color-brand-500, #ea580c);
+  color: #ffffff;
+}
+
+.btn-stop:hover {
+  background-color: var(--color-brand-600, #c2410c);
+}
+
+.btn-send {
+  background-color: var(--color-brand-500, #ea580c);
+  color: #ffffff;
+}
+
+.btn-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 1px 1px 0px var(--color-outline, #1e293b);
+}
+
+/* Preview Track */
+.preview-track-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.preview-slider {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background-color: var(--color-bg-muted, #e2e8f0);
+  border: 1.5px solid var(--color-outline, #1e293b);
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.preview-slider-fill {
+  height: 100%;
+  background-color: var(--color-brand-500, #ea580c);
+  border-radius: 3px;
+  transition: width 60ms linear;
+}
+
+/* Banner Inline Alert */
+.permission-banner {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 2px solid var(--color-outline, #1e293b);
+  background-color: var(--color-bg-surface, #ffffff);
+  box-shadow: 2px 2px 0px var(--color-outline, #1e293b);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: popIn 150ms ease-out forwards;
+}
+
+.banner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.banner-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display, Fredoka, cursive, sans-serif);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--color-text-base, #1e293b);
+}
+
+.banner-steps {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.4;
+}
+
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.banner-try-again {
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 1.5px solid var(--color-outline, #1e293b);
+  background-color: var(--color-brand-500, #ea580c);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 1px 1px 0px var(--color-outline, #1e293b);
+}
+
+.banner-try-again:hover {
+  background-color: var(--color-brand-600, #c2410c);
+}
+
+/* Accessibility / Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .voice-recorder-bar,
+  .permission-banner {
+    animation: none;
+  }
+  .pulsing-dot,
+  .timer-warning {
+    animation: none;
+  }
+  .level-bar {
+    transition: none;
+  }
+  .recorder-btn {
+    transition: none;
+  }
+}
+

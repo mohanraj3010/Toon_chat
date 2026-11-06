@@ -1,0 +1,213 @@
+.bellWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bellBtn {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  color: var(--color-text-muted, #64748b);
+  transition: all 0.2s ease;
+}
+
+.bellBtn:hover {
+  background: var(--color-bg-base, #f1f5f9);
+  color: var(--color-brand-500, #f97316);
+}
+
+.bellBtn.active {
+  color: var(--color-brand-500, #f97316);
+  background: var(--color-brand-100, #ffedd5);
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--color-brand-500, #f97316);
+  color: #ffffff;
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 10px;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  animation: bounceBadge 2s infinite;
+}
+
+@keyframes bounceBadge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.popover {
+  position: absolute;
+  width: 340px;
+  max-width: calc(100vw - 110px);
+  max-height: min(480px, calc(100vh - 40px));
+  background: var(--color-bg-surface, #ffffff);
+  border: 3.5px solid #1e293b;
+  border-radius: 22px;
+  box-shadow: 0 8px 0 #1e293b, 0 16px 36px rgba(0, 0, 0, 0.25);
+  padding: 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: popIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Rail placement: opens to the right of the rail, anchored from the bottom */
+.placement-rail {
+  left: calc(100% + 14px);
+  bottom: -4px;
+  top: auto;
+  right: auto;
+}
+
+/* Speech bubble pointer on left edge pointing to bell */
+.placement-rail::before {
+  content: '';
+  position: absolute;
+  bottom: 14px;
+  left: -12px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 12px solid #1e293b;
+}
+
+.placement-rail::after {
+  content: '';
+  position: absolute;
+  bottom: 15px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 10px solid var(--color-bg-surface, #ffffff);
+}
+
+/* Dropdown placement: opens downwards */
+.placement-dropdown {
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  bottom: auto;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+}
+
+.popoverHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--color-neutral-200, #e2e8f0);
+}
+
+.popoverTitle {
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.viewAllLink {
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-brand-600, #ea580c);
+  text-decoration: none;
+  background: var(--color-brand-50, #fff7ed);
+  border: 1.5px solid var(--color-brand-300, #fdba74);
+  padding: 4px 10px;
+  border-radius: 12px;
+  transition: transform 0.1s ease;
+}
+
+.viewAllLink:hover {
+  transform: translateY(-1px);
+}
+
+.quickList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.quickItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--color-bg-base, #f8fafc);
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: 2px solid var(--color-neutral-200, #e2e8f0);
+  transition: all 0.15s ease;
+}
+
+.quickItem:hover {
+  background: #fff7ed;
+  border-color: var(--color-brand-400, #fb923c);
+  transform: translateX(2px);
+}
+
+.quickEmoji {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.quickText {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quickName {
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.quickContent {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}

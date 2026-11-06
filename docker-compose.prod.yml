@@ -1,0 +1,65 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: toonchat-prod-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: toonchat
+    volumes:
+      - toonchat_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d toonchat"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: toonchat-prod-backend
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DB_TARGET: local
+      LOCAL_DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@db:5432/toonchat
+      RUN_MIGRATIONS: "true"
+      LOG_FORMAT: json
+      CORS_ORIGINS: "http://localhost,http://localhost:80,http://127.0.0.1,http://127.0.0.1:80"
+      SUPABASE_JWT_SECRET: "dev_secret_toonchat_auth_jwt_key_32_bytes_min"
+      SUPABASE_JWT_ALGORITHM: "HS256"
+      WEB_CONCURRENCY: 2
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: toonchat-prod-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  toonchat_pgdata:
+

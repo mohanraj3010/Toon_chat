@@ -1,0 +1,36 @@
+.stack {
+  display: flex;
+  align-items: center;
+}
+
+.avatarRing {
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  overflow: hidden;
+  background: var(--color-brand-100, #fed7aa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  margin-left: -8px;
+  flex-shrink: 0;
+}
+
+.avatarRing:first-child {
+  margin-left: 0;
+}
+
+.countBadge {
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: #1e293b;
+  color: #ffffff;
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -8px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}

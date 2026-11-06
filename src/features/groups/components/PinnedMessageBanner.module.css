@@ -1,0 +1,69 @@
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--color-brand-50, #fff7ed);
+  border-bottom: 2px solid var(--color-brand-200, #fed7aa);
+  padding: 8px 16px;
+  z-index: 9;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.leftInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.pinIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.contentCol {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.label {
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-brand-600, #ea580c);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.text {
+  font-size: 0.85rem;
+  color: var(--color-text-primary, #0f172a);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.unpinBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted, #64748b);
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.unpinBtn:hover {
+  background: var(--color-brand-100, #ffedd5);
+  color: #ef4444;
+}

@@ -1,0 +1,120 @@
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filterTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.filterTab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid var(--color-neutral-300, #cbd5e1);
+  background: var(--color-bg-surface, #ffffff);
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filterTab.active {
+  background: var(--color-brand-500, #f97316);
+  border-color: #1e293b;
+  color: #ffffff;
+  box-shadow: 0 3px 0 #1e293b;
+}
+
+.markAllBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-brand-50, #fff7ed);
+  border: 2px solid var(--color-brand-300, #fdba74);
+  border-radius: 14px;
+  padding: 8px 14px;
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--color-brand-600, #ea580c);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.markAllBtn:hover {
+  background: var(--color-brand-100, #ffedd5);
+  transform: translateY(-1px);
+}
+
+.groupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.groupTitle {
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #0f172a);
+  margin: 8px 0 4px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  gap: 12px;
+}
+
+.emptyTitle {
+  font-family: var(--font-display, 'Fredoka', cursive);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.emptyText {
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.95rem;
+  max-width: 320px;
+  margin: 0;
+}
+
+/* Skeleton Loading */
+.skeletonCard {
+  height: 76px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 20px;
+  border: 2px solid #e2e8f0;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

@@ -1,0 +1,140 @@
+.pageContainer {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--spacing-4) var(--spacing-4) var(--spacing-12) var(--spacing-4);
+  animation: fadeIn var(--motion-duration-slow) var(--motion-easing-smooth);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-5);
+  padding: 0 var(--spacing-2);
+}
+
+.pageHeading {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pageSubtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.desktopLayout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--spacing-6);
+  align-items: flex-start;
+}
+
+.mobileNavList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobileNavCard {
+  background-color: var(--color-bg-surface);
+  border-radius: var(--radius-2xl);
+  border: var(--border-width-base) solid var(--color-outline);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  min-height: 58px;
+  transition: transform var(--motion-duration-fast) var(--motion-easing-bounce),
+              box-shadow var(--motion-duration-fast);
+}
+
+.mobileNavCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sticker);
+}
+
+.mobileNavCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mobileIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  border: var(--border-width-sm) solid var(--color-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 1px 1px 0px 0px var(--color-ink);
+  flex-shrink: 0;
+}
+
+.mobileNavCardTitle {
+  font-family: var(--font-heading);
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+}
+
+.mobileNavCardSubtitle {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.mobileDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--spacing-4);
+}
+
+.mobileBackButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  border: var(--border-width-sm) solid var(--color-outline);
+  background-color: var(--color-bg-surface);
+  font-family: var(--font-heading);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  box-shadow: 1px 1px 0px 0px var(--color-ink);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.mobileBackButton:hover {
+  background-color: var(--color-neutral-100);
+}
+
+.loadingSkeleton {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--spacing-6);
+}
+
+@media (max-width: 767px) {
+  .loadingSkeleton {
+    grid-template-columns: 1fr;
+  }
+}

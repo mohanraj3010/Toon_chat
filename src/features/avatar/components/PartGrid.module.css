@@ -1,0 +1,100 @@
+.gridContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 12px;
+  padding: 8px 2px 16px 2px;
+}
+
+@media (max-width: 767px) {
+  .gridContainer {
+    grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+    gap: 10px;
+  }
+}
+
+.partTile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-xl, 20px);
+  border: 2px solid var(--color-neutral-200, #e2e8f0);
+  background-color: var(--color-bg-surface, #ffffff);
+  box-shadow: 0 3px 0 var(--color-neutral-200, #e2e8f0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 6px;
+  transition: all 0.18s var(--motion-easing-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+  outline: none;
+}
+
+.partTile:hover {
+  transform: translateY(-3px) scale(1.03);
+  border-color: var(--color-brand-400, #c084fc);
+  box-shadow: 0 5px 0 var(--color-outline, #1f1b24);
+}
+
+.partTile:focus-visible {
+  border-color: var(--color-brand-500, #a855f7);
+  box-shadow: 0 0 0 3px var(--color-brand-200, #e9d5ff);
+}
+
+.partTileSelected {
+  border-color: var(--color-outline, #1f1b24);
+  background-color: var(--color-brand-50, #faf5ff);
+  box-shadow: 0 4px 0 var(--color-outline, #1f1b24);
+  transform: translateY(-2px);
+  animation: popSelect 0.22s var(--motion-easing-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+@keyframes popSelect {
+  0% { transform: scale(0.92); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1) translateY(-2px); }
+}
+
+.selectedSparkle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  background-color: var(--color-brand-500, #a855f7);
+  border-radius: 50%;
+  border: 1.5px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  animation: badgePop 0.25s ease-out;
+}
+
+@keyframes badgePop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.thumbnailWrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 16px);
+}
+
+.partLabel {
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text, #1f1b24);
+  margin-top: 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}

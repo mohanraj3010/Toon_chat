@@ -1,0 +1,104 @@
+.navContainer {
+  background-color: var(--color-bg-surface);
+  border-radius: var(--radius-2xl);
+  border: var(--border-width-base) solid var(--color-outline);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.navTitle {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+  padding: var(--spacing-2) var(--spacing-3);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: var(--radius-xl);
+  border: var(--border-width-sm) solid transparent;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  min-height: 48px;
+  transition: all var(--motion-duration-fast) var(--motion-easing-bounce);
+}
+
+.navItem:hover:not(.active) {
+  background-color: var(--color-neutral-100);
+  transform: translateX(3px);
+}
+
+.navItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconWrapper {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  border: var(--border-width-sm) solid var(--color-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-base);
+  box-shadow: 1px 1px 0px 0px var(--color-ink);
+  flex-shrink: 0;
+}
+
+.active {
+  background-color: var(--color-brand-100);
+  border-color: var(--color-outline);
+  box-shadow: var(--shadow-sticker);
+  color: var(--color-brand-600);
+}
+
+.active .iconWrapper {
+  background-color: var(--color-brand-500);
+  color: #ffffff;
+}
+
+.logoutItem {
+  color: var(--color-danger);
+  margin-top: 8px;
+  border-top: 1px dashed var(--color-neutral-200);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  padding-top: 14px;
+}
+
+.logoutItem:hover {
+  background-color: var(--color-danger-light) !important;
+  color: var(--color-danger) !important;
+}
+
+.logoutItem .iconWrapper {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-neutral-200);
+  color: var(--color-text);
+}

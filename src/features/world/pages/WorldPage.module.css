@@ -1,0 +1,659 @@
+/* WorldPage.module.css - ToonChat World Living Cartoon Park */
+
+.pageContainer {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: #d5f2fc;
+  user-select: none;
+}
+
+/* ------------------------------------------------------------- */
+/* TOP WORLD HEADER BAR (matching toon-world.jpg!)               */
+/* ------------------------------------------------------------- */
+.worldHeader {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.headerLeft {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.headerCenter {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  pointer-events: auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.headerRight {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+/* Back button pill matching toon-world.jpg */
+.btnBack {
+  background: #ffffff;
+  color: #1e1e24;
+  border: 2px solid #1e1e24;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 2.5px 2.5px 0px #1e1e24;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s;
+}
+
+.btnBack:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 3.5px 3.5px 0px #1e1e24;
+  background: #f8fafc;
+}
+
+.btnBack:active {
+  transform: translateY(1.5px) scale(0.98);
+  box-shadow: 1px 1px 0px #1e1e24;
+}
+
+/* Title text */
+.worldTitle {
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 22px;
+  font-weight: 800;
+  color: #1e1e24;
+  text-shadow: 0 1px 0 #ffffff, 0 2px 4px rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+/* Friends pill button */
+.btnFriends {
+  background: #ffffff;
+  color: #1e1e24;
+  border: 2px solid #1e1e24;
+  border-radius: 9999px;
+  padding: 7px 14px;
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 2.5px 2.5px 0px #1e1e24;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.btnFriends:hover {
+  transform: translateY(-1px);
+  box-shadow: 3.5px 3.5px 0px #1e1e24;
+}
+
+/* Menu icon button */
+.btnMenu {
+  background: #ffffff;
+  color: #1e1e24;
+  border: 2px solid #1e1e24;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 2.5px 2.5px 0px #1e1e24;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btnMenu:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 3.5px 3.5px 0px #1e1e24;
+}
+
+/* Live FPS Performance Floating Badge */
+.fpsFloatingBadge {
+  position: absolute;
+  top: 62px;
+  left: 16px;
+  background: rgba(30, 30, 36, 0.85);
+  color: #a7f3d0;
+  border: 1.5px solid #1e1e24;
+  border-radius: 9999px;
+  padding: 3px 8px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 1px 1px 0px #1e1e24;
+  z-index: 490;
+  pointer-events: auto;
+}
+
+.fpsDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+/* ------------------------------------------------------------- */
+/* ACTIVITY FEED (Collapsible cartoon card / ticker)             */
+/* ------------------------------------------------------------- */
+.activityFeedWrapper {
+  position: absolute;
+  top: 68px;
+  left: 16px;
+  z-index: 480;
+  max-width: 320px;
+  width: calc(100% - 32px);
+  pointer-events: auto;
+}
+
+.activityFeedCard {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 2.5px solid #1e1e24;
+  border-radius: 18px;
+  padding: 10px 14px;
+  box-shadow: 3px 3px 0px #1e1e24;
+  animation: feedSlide 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes feedSlide {
+  0% {
+    transform: translateY(-12px) scale(0.96);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.activityFeedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.activityFeedList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body, 'Nunito', sans-serif);
+  font-size: 12px;
+  color: #1e1e24;
+  line-height: 1.3;
+}
+
+.activityUser {
+  font-weight: 800;
+  color: #0284c7;
+}
+
+.activityText {
+  color: #334155;
+}
+
+.activityTime {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-left: auto;
+}
+
+/* ------------------------------------------------------------- */
+/* BOTTOM FLOATING ACTION BAR & QUICK EMOTES                     */
+/* ------------------------------------------------------------- */
+.bottomControls {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 500;
+  pointer-events: auto;
+  max-width: 95%;
+  flex-wrap: nowrap;
+}
+
+.actionPillContainer {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 2.5px solid #1e1e24;
+  border-radius: 9999px;
+  padding: 6px 12px;
+  box-shadow: 3px 3px 0px #1e1e24;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Quick emote reaction button */
+.btnQuickEmote {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 12px;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btnQuickEmote:hover {
+  transform: translateY(-3px) scale(1.25);
+  background: #f1f5f9;
+}
+
+.btnQuickEmote:active {
+  transform: translateY(1px) scale(0.95);
+}
+
+.divider {
+  width: 1.5px;
+  height: 22px;
+  background-color: #cbd5e1;
+}
+
+/* Speech Input Form */
+.speechInputForm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.speechInput {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-family: var(--font-body, 'Nunito', sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e1e24;
+  outline: none;
+  width: 170px;
+  transition: border-color 0.15s, width 0.2s;
+}
+
+.speechInput:focus {
+  border-color: #0ea5e9;
+  background: #ffffff;
+  width: 220px;
+}
+
+.btnSendSpeech {
+  background: #0ea5e9;
+  color: #ffffff;
+  border: 2px solid #1e1e24;
+  border-radius: 9999px;
+  padding: 6px 12px;
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px #1e1e24;
+  transition: transform 0.15s;
+}
+
+.btnSendSpeech:hover {
+  transform: translateY(-1px);
+  background: #0284c7;
+}
+
+/* Place Switcher signpost button */
+.btnTravel {
+  background: #fef08a;
+  color: #854d0e;
+  border: 2.5px solid #1e1e24;
+  border-radius: 9999px;
+  padding: 9px 18px;
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px #1e1e24;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btnTravel:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 4px 4px 0px #1e1e24;
+  background: #fde047;
+}
+
+.btnTravel:active {
+  transform: translateY(1px);
+  box-shadow: 1.5px 1.5px 0px #1e1e24;
+}
+
+/* ------------------------------------------------------------- */
+/* FRIENDS DRAWER / BOTTOM SHEET                                 */
+/* ------------------------------------------------------------- */
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 27, 36, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 600;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.friendsDrawer {
+  width: 320px;
+  max-width: 90vw;
+  height: 100%;
+  background: #ffffff;
+  border-left: 3px solid #1e1e24;
+  box-shadow: -6px 0 0px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  animation: slideLeft 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.drawerTitle {
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e1e24;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnCloseDrawer {
+  background: transparent;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawerFriendsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.drawerFriendItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 2px solid #1e1e24;
+  border-radius: 16px;
+  box-shadow: 2px 2px 0px #1e1e24;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.drawerFriendItem:hover {
+  transform: translateY(-1px);
+  background: #ffffff;
+}
+
+.drawerFriendAvatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1.5px solid #1e1e24;
+  flex-shrink: 0;
+  background: #f1f5f9;
+}
+
+.drawerFriendInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.drawerFriendName {
+  font-family: var(--font-heading, 'Fredoka', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e1e24;
+}
+
+.drawerFriendStatus {
+  font-family: var(--font-body, 'Nunito', sans-serif);
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Scene transition overlay */
+.sceneTransitionOverlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, #ffffff 0%, #e0f2fe 100%);
+  z-index: 550;
+  pointer-events: none;
+  animation: sceneFlash 0.4s ease-out forwards;
+}
+
+@keyframes sceneFlash {
+  0% { opacity: 0; }
+  40% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* ------------------------------------------------------------- */
+/* RESPONSIVE & MOBILE ADAPTATIONS                               */
+/* ------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .worldTitle {
+    font-size: 18px;
+  }
+
+  .activityFeedWrapper {
+    max-width: 260px;
+    top: 60px;
+  }
+
+  .speechInput {
+    width: 110px;
+  }
+
+  .speechInput:focus {
+    width: 140px;
+  }
+}
+
+@media (max-width: 640px) {
+  .worldHeader {
+    top: 10px;
+    left: 8px;
+    right: 8px;
+    gap: 6px;
+  }
+
+  .btnBack {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .worldTitle {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .btnFriends {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btnMenu {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fpsFloatingBadge {
+    top: auto;
+    bottom: 58px;
+    left: 10px;
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .bottomControls {
+    bottom: 12px;
+    gap: 8px;
+    flex-direction: column-reverse;
+    align-items: center;
+  }
+
+  .actionPillContainer {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  .btnQuickEmote {
+    font-size: 20px;
+    padding: 4px 6px;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btnTravel {
+    padding: 8px 16px;
+    font-size: 13px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .speechInputForm {
+    display: none; /* Keep clean on narrow mobile; use quick emotes */
+  }
+
+  .activityFeedWrapper {
+    display: none; /* Collapsed into bottom sheet on mobile */
+  }
+
+  .friendsDrawer {
+    width: 100vw;
+    max-width: 100vw;
+    height: 75vh;
+    border-left: none;
+    border-top: 3px solid #1e1e24;
+    border-radius: 24px 24px 0 0;
+    margin-top: auto;
+    animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+}
