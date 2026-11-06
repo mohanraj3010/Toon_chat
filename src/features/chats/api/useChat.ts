@@ -380,7 +380,7 @@ export const useChat = (conversationId: string | undefined) => {
     async (blob: Blob, meta: VoiceMetadata) => {
       if (!conversationId) return;
 
-      const clientMessageId = generateClientMessageId();
+      generateClientMessageId();
 
       // Format canonical duration string (mm:ss)
       const totalSeconds = Math.max(0, Math.floor(meta.durationMs / 1000));
@@ -459,11 +459,11 @@ export const useChat = (conversationId: string | undefined) => {
           old.map((m) =>
             m.clientMessageId === uniqueId || m.id === uniqueId
               ? {
-                  ...m,
-                  mediaId: uploadRes.mediaId,
-                  mediaUrl: localPreviewUrl || `/api/v1/media/${uploadRes.mediaId}/url`,
-                  status: 'sending',
-                }
+                ...m,
+                mediaId: uploadRes.mediaId,
+                mediaUrl: localPreviewUrl || `/api/v1/media/${uploadRes.mediaId}/url`,
+                status: 'sending',
+              }
               : m
           )
         );
