@@ -1,4 +1,4 @@
-import { apiClient } from './httpClient';
+import { apiClient, API_BASE } from './httpClient';
 
 export type SupportedMediaType = 'image' | 'voice' | 'video' | 'file';
 
@@ -64,8 +64,6 @@ interface CachedDownloadUrl {
 
 // In-memory cache for short-lived download URLs with proactive expiry
 const downloadUrlCache = new Map<string, CachedDownloadUrl>();
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 export const mediaService = {
   /**

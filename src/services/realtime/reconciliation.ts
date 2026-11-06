@@ -283,7 +283,6 @@ export function updateConversationPreviewInCache<T extends Conversation = Conver
   };
 
   queryClient.setQueriesData<T[]>({ queryKey: ['conversations'] }, updateFn);
-  queryClient.setQueryData<T[]>(['conversations'], updateFn);
 }
 
 /**
@@ -307,5 +306,4 @@ export function clearConversationUnreadInCache<T extends Conversation = Conversa
   };
 
   queryClient.setQueriesData<T[]>({ queryKey: ['conversations'] }, updateFn);
-  queryClient.setQueryData<T[]>(['conversations'], updateFn);
 }

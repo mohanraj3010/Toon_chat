@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { ChatBubble } from '@/design-system/primitives';
 import type { Message } from '@/shared/types';
-import { useAuth } from '@/features/auth/context/useAuth';
+import { AuthContext } from '@/features/auth/context/authContextInstance';
 import { VoiceMessage } from './VoiceMessage';
 import { Check, CheckCheck, Clock, FileText, Download, Image as ImageIcon, AlertCircle, Loader2, SmilePlus } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
@@ -57,7 +57,8 @@ export const MessageBubble = ({
   onReact,
   currentUserId,
 }: Props) => {
-  const { user: currentUser } = useAuth();
+  const authContext = useContext(AuthContext);
+  const currentUser = authContext?.user;
 
   // Safely evaluate whether this message was authored by the current logged-in user:
   // 1. Checks both `sender_id` (backend/wire format) and `senderId` (camelCase domain format) or nested `sender.id`

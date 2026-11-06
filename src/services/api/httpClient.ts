@@ -1,9 +1,12 @@
 import { supabase } from '@/features/auth/api/supabaseClient';
+import { API_BASE_URL } from '@/app/env';
 
-// In development the Vite dev server proxies /api/* → http://localhost:8000
-// so we can use a relative base path, which eliminates CORS pre-flight issues.
-// In production or when VITE_API_URL is set explicitly, honour that value.
-const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+/**
+ * Authoritative API Base URL.
+ * Defaults to 'https://toonchat-backend.onrender.com/api/v1' in production/fallback.
+ * Never falls back to a relative path like '/api/v1' in production to prevent 404s on static hosts (e.g. Vercel).
+ */
+export const API_BASE = API_BASE_URL;
 
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
@@ -267,7 +270,10 @@ export async function request<T = unknown>(
   }
 
   // Construct URL
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  if (API_BASE.endsWith('/api/v1') && cleanEndpoint.startsWith('/api/v1/')) {
+    cleanEndpoint = cleanEndpoint.replace(/^\/api\/v1/, '');
+  }
   const url = cleanEndpoint.startsWith('http') ? cleanEndpoint : `${API_BASE}${cleanEndpoint}`;
 
   // Safe developer diagnostics (never logs sensitive token contents)

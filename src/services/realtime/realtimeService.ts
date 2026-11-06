@@ -224,28 +224,30 @@ export class RealtimeService {
   }
 
   private buildWebSocketUrl(ticket: string): string {
-    if (this.config.wsUrl) {
-      const base = this.config.wsUrl.replace(/\/+$/, '');
-      return `${base}/api/v1/realtime/ws?ticket=${encodeURIComponent(ticket)}`;
+    const rawWsUrl =
+      this.config.wsUrl ||
+      import.meta.env.VITE_WS_BASE_URL ||
+      import.meta.env.VITE_WS_URL ||
+      'wss://toonchat-backend.onrender.com';
+
+    let cleanBase = (rawWsUrl as string).trim().replace(/\/+$/, '');
+
+    // Convert http/https to ws/wss if provided as an HTTP URL
+    if (cleanBase.startsWith('https://')) {
+      cleanBase = cleanBase.replace(/^https:\/\//, 'wss://');
+    } else if (cleanBase.startsWith('http://')) {
+      cleanBase = cleanBase.replace(/^http:\/\//, 'ws://');
+    } else if (cleanBase.startsWith('/')) {
+      const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = typeof window !== 'undefined' ? window.location.host : 'localhost:8000';
+      cleanBase = `${protocol}//${host}${cleanBase}`;
     }
 
-    // Derive from apiClient API_BASE or window location
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-    let wsBase: string;
-
-    if (apiBase.startsWith('http://')) {
-      wsBase = apiBase.replace('http://', 'ws://');
-    } else if (apiBase.startsWith('https://')) {
-      wsBase = apiBase.replace('https://', 'wss://');
-    } else if (apiBase.startsWith('/')) {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsBase = `${protocol}//${window.location.host}${apiBase}`;
-    } else {
-      wsBase = `ws://localhost:8000/api/v1`;
+    // Ensure we don't duplicate /api/v1 prefix
+    if (cleanBase.endsWith('/api/v1')) {
+      return `${cleanBase}/realtime/ws?ticket=${encodeURIComponent(ticket)}`;
     }
-
-    const cleanBase = wsBase.replace(/\/+$/, '');
-    return `${cleanBase}/realtime/ws?ticket=${encodeURIComponent(ticket)}`;
+    return `${cleanBase}/api/v1/realtime/ws?ticket=${encodeURIComponent(ticket)}`;
   }
 
   // ==========================================

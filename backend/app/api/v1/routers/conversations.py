@@ -114,6 +114,12 @@ def build_conversation_summary(
     response_model=List[ConversationSummaryResponse],
     status_code=status.HTTP_200_OK,
 )
+@router.get(
+    "/",
+    response_model=List[ConversationSummaryResponse],
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
 async def list_conversations(
     current_user: User = Depends(require_active_user),
     db: AsyncSession = Depends(get_db),
@@ -184,6 +190,12 @@ async def list_conversations(
     "",
     response_model=ConversationSummaryResponse,
     status_code=status.HTTP_201_CREATED,
+)
+@router.post(
+    "/",
+    response_model=ConversationSummaryResponse,
+    status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,
 )
 async def create_or_get_direct_conversation(
     req: ConversationCreateRequest,

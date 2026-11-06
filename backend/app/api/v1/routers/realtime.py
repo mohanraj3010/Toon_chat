@@ -43,6 +43,13 @@ FRAME_WINDOW_SEC = 1.0
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(rate_limit_auth)],
 )
+@router.post(
+    "/ticket/",
+    response_model=RealtimeTicketResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(rate_limit_auth)],
+    include_in_schema=False,
+)
 async def issue_realtime_ticket(
     current_user: User = Depends(require_active_user),
 ) -> RealtimeTicketResponse:
