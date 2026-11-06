@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChatBubble } from '@/design-system/primitives';
 import type { Message } from '@/shared/types';
+import { useAuth } from '@/features/auth/context/useAuth';
 import { VoiceMessage } from './VoiceMessage';
 import { Check, CheckCheck, Clock, FileText, Download, Image as ImageIcon, AlertCircle, Loader2, SmilePlus } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
@@ -16,7 +17,7 @@ import reactionStyles from './ReactionBar.module.css';
 
 interface Props {
   message: Message;
-  isMine: boolean;
+  isMine?: boolean;
   showTail?: boolean;
   showSender?: boolean;
   senderName?: string;
@@ -46,7 +47,7 @@ function getFileBadgeColor(filename: string): { bg: string; color: string; label
 
 export const MessageBubble = ({
   message,
-  isMine,
+  isMine: isMineProp,
   showTail = true,
   showSender = false,
   senderName,
@@ -56,7 +57,27 @@ export const MessageBubble = ({
   onReact,
   currentUserId,
 }: Props) => {
-  const variant = isMine ? 'sent' : 'received';
+  const { user: currentUser } = useAuth();
+
+  // Safely evaluate whether this message was authored by the current logged-in user:
+  // 1. Checks both `sender_id` (backend/wire format) and `senderId` (camelCase domain format) or nested `sender.id`
+  // 2. Compares against active `currentUser.id` from AuthContext (with fallback to `currentUserId` prop)
+  // 3. Handles case-insensitivity, string conversion, and trimming for UUID/string safety
+  // 4. Safely falls back to `isMineProp` if provided as true
+  const activeUserId = currentUser?.id ?? currentUserId;
+  const messageSenderId =
+    (message as any)?.sender_id ??
+    message?.senderId ??
+    (message as any)?.sender?.id;
+
+  const isOwnMessage = Boolean(
+    (activeUserId &&
+      messageSenderId &&
+      String(messageSenderId).trim().toLowerCase() === String(activeUserId).trim().toLowerCase()) ||
+    Boolean(isMineProp)
+  );
+
+  const variant = isOwnMessage ? 'sent' : 'received';
   const [showReactionBar, setShowReactionBar] = useState(false);
 
   // Validate whether initial mediaUrl is already a direct playable/viewable URL
@@ -200,7 +221,7 @@ export const MessageBubble = ({
                 ? message.content.replace(/^Voice note \((.*?)\)$/, '$1')
                 : undefined
             }
-            isMine={isMine}
+            isMine={isOwnMessage}
             status={message.status}
             onRetry={() => onRetry?.(message.clientMessageId || message.id)}
           />
@@ -398,9 +419,9 @@ export const MessageBubble = ({
       <div
         id={`message-${message.id}`}
         className={styles['message-wrapper']}
-        style={{ alignSelf: isMine ? 'flex-end' : 'flex-start', alignItems: isMine ? 'flex-end' : 'flex-start' }}
+        style={{ alignSelf: isOwnMessage ? 'flex-end' : 'flex-start', alignItems: isOwnMessage ? 'flex-end' : 'flex-start' }}
       >
-        {showSender && !isMine && senderName && (
+        {showSender && !isOwnMessage && senderName && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, marginLeft: 6 }}>
             {senderAvatar && (
               <div style={{ width: 22, height: 22, borderRadius: '50%', overflow: 'hidden', border: '1.5px solid #1e293b' }}>
@@ -419,7 +440,7 @@ export const MessageBubble = ({
             <ReactionBar
               onSelectReaction={handleSelectReaction}
               onClose={() => setShowReactionBar(false)}
-              isMine={isMine}
+              isMine={isOwnMessage}
             />
           )}
 
@@ -427,7 +448,7 @@ export const MessageBubble = ({
             type="button"
             className={cn(
               reactionStyles['reaction-trigger-btn'],
-              isMine ? reactionStyles['reaction-trigger-btn-mine'] : reactionStyles['reaction-trigger-btn-theirs'],
+              isOwnMessage ? reactionStyles['reaction-trigger-btn-mine'] : reactionStyles['reaction-trigger-btn-theirs'],
               showReactionBar && reactionStyles['reaction-trigger-btn-active']
             )}
             onClick={() => setShowReactionBar((prev) => !prev)}
@@ -445,10 +466,10 @@ export const MessageBubble = ({
           reactions={message.reactions}
           currentUserId={currentUserId}
           onReact={(emoji) => onReact?.(message.id, emoji)}
-          isMine={isMine}
+          isMine={isOwnMessage}
         />
 
-        {isMine && (
+        {isOwnMessage && (
           <div className={styles['message-status']}>
             {time}
             {message.status === 'uploading' && <Loader2 size={10} style={{ animation: 'spin 1s linear infinite' }} />}
@@ -487,9 +508,9 @@ export const MessageBubble = ({
     <div
       id={`message-${message.id}`}
       className={styles['message-wrapper']}
-      style={{ alignSelf: isMine ? 'flex-end' : 'flex-start', alignItems: isMine ? 'flex-end' : 'flex-start' }}
+      style={{ alignSelf: isOwnMessage ? 'flex-end' : 'flex-start', alignItems: isOwnMessage ? 'flex-end' : 'flex-start' }}
     >
-      {showSender && !isMine && senderName && (
+      {showSender && !isOwnMessage && senderName && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, marginLeft: 6 }}>
           {senderAvatar && (
             <div style={{ width: 22, height: 22, borderRadius: '50%', overflow: 'hidden', border: '1.5px solid #1e293b' }}>
@@ -508,7 +529,7 @@ export const MessageBubble = ({
           <ReactionBar
             onSelectReaction={handleSelectReaction}
             onClose={() => setShowReactionBar(false)}
-            isMine={isMine}
+            isMine={isOwnMessage}
           />
         )}
 
@@ -516,7 +537,7 @@ export const MessageBubble = ({
           type="button"
           className={cn(
             reactionStyles['reaction-trigger-btn'],
-            isMine ? reactionStyles['reaction-trigger-btn-mine'] : reactionStyles['reaction-trigger-btn-theirs'],
+            isOwnMessage ? reactionStyles['reaction-trigger-btn-mine'] : reactionStyles['reaction-trigger-btn-theirs'],
             showReactionBar && reactionStyles['reaction-trigger-btn-active']
           )}
           onClick={() => setShowReactionBar((prev) => !prev)}
@@ -533,7 +554,7 @@ export const MessageBubble = ({
         >
           {message.replyToId && (
             <div 
-              className={cn(styles['reply-quote'], isMine && styles['reply-quote-mine'])}
+              className={cn(styles['reply-quote'], isOwnMessage && styles['reply-quote-mine'])}
               onClick={() => {
                 const el = document.getElementById(`message-${message.replyToId}`);
                 if (el) {
@@ -558,10 +579,10 @@ export const MessageBubble = ({
         reactions={message.reactions}
         currentUserId={currentUserId}
         onReact={(emoji) => onReact?.(message.id, emoji)}
-        isMine={isMine}
+        isMine={isOwnMessage}
       />
 
-      {isMine && (
+      {isOwnMessage && (
         <div className={styles['message-status']}>
           {time}
           {message.status === 'uploading' && <Loader2 size={10} style={{ animation: 'spin 1s linear infinite' }} />}

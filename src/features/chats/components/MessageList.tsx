@@ -37,7 +37,7 @@ export const MessageList = ({
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  const currentUserId = user?.id || '00000000-0000-0000-0000-000000000000';
+  const currentUserId = user?.id;
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -45,7 +45,15 @@ export const MessageList = ({
 
     const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
     const lastMessage = messages[messages.length - 1];
-    const isSentByMe = lastMessage?.senderId === currentUserId;
+    const lastSenderId =
+      (lastMessage as any)?.sender_id ??
+      lastMessage?.senderId ??
+      (lastMessage as any)?.sender?.id;
+    const isSentByMe = Boolean(
+      currentUserId &&
+      lastSenderId &&
+      String(lastSenderId).trim().toLowerCase() === String(currentUserId).trim().toLowerCase()
+    );
 
     if (isNearBottom || isSentByMe) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -94,11 +102,31 @@ export const MessageList = ({
       )}
 
       {messages.map((message, i) => {
-        const isMine = message.senderId === currentUserId;
+        const rawSenderId =
+          (message as any)?.sender_id ??
+          message?.senderId ??
+          (message as any)?.sender?.id;
+        const isOwnMessage = Boolean(
+          currentUserId &&
+          rawSenderId &&
+          String(rawSenderId).trim().toLowerCase() === String(currentUserId).trim().toLowerCase()
+        );
+        const isMine = isOwnMessage;
+
         // Grouping: hide tail if next message is from same sender within 2 mins
         let showTail = true;
         const nextMsg = messages[i + 1];
-        if (nextMsg && nextMsg.senderId === message.senderId) {
+        const nextSenderId =
+          (nextMsg as any)?.sender_id ??
+          nextMsg?.senderId ??
+          (nextMsg as any)?.sender?.id;
+
+        if (
+          nextMsg &&
+          rawSenderId &&
+          nextSenderId &&
+          String(nextSenderId).trim().toLowerCase() === String(rawSenderId).trim().toLowerCase()
+        ) {
           const timeDiff =
             new Date(nextMsg.createdAt).getTime() - new Date(message.createdAt).getTime();
           if (timeDiff < 120000) {
@@ -107,6 +135,7 @@ export const MessageList = ({
         }
 
         const sender =
+          (rawSenderId ? participantsMap?.[rawSenderId] : undefined) ||
           participantsMap?.[message.senderId] ||
           (message.sender
             ? {

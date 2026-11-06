@@ -231,27 +231,59 @@ export function mergeHistoryInCache(
 /**
  * Updates conversation preview and unread count in the 'conversations' query cache
  * if conversations exist in cache.
+ * Constraints:
+ * 1. unreadCount MUST NOT increment if the message was sent by the current user.
+ * 2. If the user is actively sending in this conversation, unreadCount is forced to 0.
+ * 3. Updates both direct ['conversations'] and user-scoped ['conversations', userId] queries.
  */
 export function updateConversationPreviewInCache<T extends Conversation = Conversation>(
   queryClient: QueryClient,
   conversationId: string,
   lastMessage: Message,
-  incrementUnread = false
+  incrementUnread = false,
+  currentUserId?: string
 ): void {
-  queryClient.setQueryData<T[]>(['conversations'], (oldChats) => {
+  // Extract sender ID across wire, domain, and nested representations
+  const rawSenderId =
+    (lastMessage as any)?.sender_id ??
+    lastMessage?.senderId ??
+    (lastMessage as any)?.sender?.id;
+
+  const isSentByMe = Boolean(
+    (currentUserId &&
+      rawSenderId &&
+      String(rawSenderId).trim().toLowerCase() === String(currentUserId).trim().toLowerCase()) ||
+    lastMessage.status === 'sending' ||
+    lastMessage.status === 'uploading'
+  );
+
+  const updateFn = (oldChats: T[] | undefined): T[] | undefined => {
     if (!oldChats) return oldChats;
     return oldChats.map((c) => {
       if (c.id === conversationId) {
+        let nextUnread: number;
+        if (isSentByMe) {
+          // Actively sending or viewing this conversation: force unreadCount to 0
+          nextUnread = 0;
+        } else if (incrementUnread) {
+          nextUnread = (c.unreadCount || 0) + 1;
+        } else {
+          nextUnread = c.unreadCount || 0;
+        }
+
         return {
           ...c,
           lastMessage,
           updatedAt: lastMessage.createdAt,
-          unreadCount: incrementUnread ? (c.unreadCount || 0) + 1 : c.unreadCount || 0,
+          unreadCount: nextUnread,
         };
       }
       return c;
     });
-  });
+  };
+
+  queryClient.setQueriesData<T[]>({ queryKey: ['conversations'] }, updateFn);
+  queryClient.setQueryData<T[]>(['conversations'], updateFn);
 }
 
 /**
@@ -261,7 +293,7 @@ export function clearConversationUnreadInCache<T extends Conversation = Conversa
   queryClient: QueryClient,
   conversationId: string
 ): void {
-  queryClient.setQueryData<T[]>(['conversations'], (oldChats) => {
+  const updateFn = (oldChats: T[] | undefined): T[] | undefined => {
     if (!oldChats) return oldChats;
     return oldChats.map((c) => {
       if (c.id === conversationId && (c.unreadCount || 0) > 0) {
@@ -272,5 +304,8 @@ export function clearConversationUnreadInCache<T extends Conversation = Conversa
       }
       return c;
     });
-  });
+  };
+
+  queryClient.setQueriesData<T[]>({ queryKey: ['conversations'] }, updateFn);
+  queryClient.setQueryData<T[]>(['conversations'], updateFn);
 }

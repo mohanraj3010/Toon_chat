@@ -60,7 +60,7 @@ export const useChat = (conversationId: string | undefined) => {
   const voiceRetryMap = useRef<Map<string, { blob: Blob; meta: VoiceMetadata }>>(new Map());
 
   // 1. Initial messages query from authoritative REST endpoint (or mock fallback)
-  const { data: rawMessages = [], isLoading } = useQuery<Message[]>({
+  const { data: messages = [], isLoading } = useQuery<Message[]>({
     queryKey,
     queryFn: async () => {
       if (!conversationId) return [];
@@ -71,12 +71,10 @@ export const useChat = (conversationId: string | undefined) => {
       );
       setHasMoreOlder(res.hasMore);
       oldestKnownSeqRef.current = res.oldestSeq;
-      return res.messages;
+      return sortAndDeduplicateMessages(res.messages);
     },
     enabled: Boolean(conversationId),
   });
-
-  const messages = sortAndDeduplicateMessages(rawMessages);
 
   // 2. Ensure RealtimeService connects when authenticated
   useEffect(() => {
@@ -192,7 +190,8 @@ export const useChat = (conversationId: string | undefined) => {
         queryClient,
         conversationId,
         domainMsg,
-        wireMsg.sender_id !== currentUserId && !isForeground
+        wireMsg.sender_id !== currentUserId && !isForeground,
+        currentUserId
       );
 
       // If message is from another participant, emit delivery receipt ACK
@@ -314,11 +313,14 @@ export const useChat = (conversationId: string | undefined) => {
     ) => {
       if (!conversationId || !content.trim()) return;
 
-      const clientMessageId = generateClientMessageId();
+      const uniqueId =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : generateClientMessageId();
 
       const optimisticMessage: Message = {
-        id: clientMessageId,
-        clientMessageId,
+        id: uniqueId,
+        clientMessageId: uniqueId,
         conversationId,
         senderId: currentUserId,
         content: content.trim(),
@@ -334,11 +336,14 @@ export const useChat = (conversationId: string | undefined) => {
         readBy: [],
         status: 'sending',
         replyToId,
+        ...({ sender_id: currentUserId }),
       };
 
-      // Optimistically insert message into TanStack cache
-      queryClient.setQueryData<Message[]>(queryKey, (old = []) => [...old, optimisticMessage]);
-      updateConversationPreviewInCache(queryClient, conversationId, optimisticMessage, false);
+      // Pure TanStack Query optimistic update using exact queryKey
+      queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
+        sortAndDeduplicateMessages([...old, optimisticMessage])
+      );
+      updateConversationPreviewInCache(queryClient, conversationId, optimisticMessage, false, currentUserId);
 
       // Stop typing on send
       sendTyping(false);
@@ -346,7 +351,7 @@ export const useChat = (conversationId: string | undefined) => {
       // Emit chat.send frame over Realtime WebSocket
       const dispatched = realtimeService.sendChatMessage({
         conversation_id: conversationId,
-        client_message_id: clientMessageId,
+        client_message_id: uniqueId,
         type,
         body: content.trim(),
         media_id: mediaInfo?.mediaId || null,
@@ -359,7 +364,7 @@ export const useChat = (conversationId: string | undefined) => {
         setTimeout(() => {
           queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
             old.map((m) =>
-              m.clientMessageId === clientMessageId && m.status === 'sending'
+              (m.clientMessageId === uniqueId || m.id === uniqueId) && m.status === 'sending'
                 ? { ...m, status: 'failed' }
                 : m
             )
@@ -405,9 +410,14 @@ export const useChat = (conversationId: string | undefined) => {
 
       const fileName = `voice_${Date.now()}${ext}`;
 
+      const uniqueId =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : generateClientMessageId();
+
       const optimisticMessage: Message = {
-        id: clientMessageId,
-        clientMessageId,
+        id: uniqueId,
+        clientMessageId: uniqueId,
         conversationId,
         senderId: currentUserId,
         content,
@@ -419,14 +429,17 @@ export const useChat = (conversationId: string | undefined) => {
         createdAt: new Date().toISOString(),
         readBy: [],
         status: 'uploading',
+        ...({ sender_id: currentUserId }),
       };
 
       // Store in retry map for recovery
-      voiceRetryMap.current.set(clientMessageId, { blob, meta });
+      voiceRetryMap.current.set(uniqueId, { blob, meta });
 
-      // Optimistically insert into TanStack cache
-      queryClient.setQueryData<Message[]>(queryKey, (old = []) => [...old, optimisticMessage]);
-      updateConversationPreviewInCache(queryClient, conversationId, optimisticMessage, false);
+      // Optimistically insert into TanStack cache using exact queryKey
+      queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
+        sortAndDeduplicateMessages([...old, optimisticMessage])
+      );
+      updateConversationPreviewInCache(queryClient, conversationId, optimisticMessage, false, currentUserId);
 
       // Stop typing
       sendTyping(false);
@@ -444,7 +457,7 @@ export const useChat = (conversationId: string | undefined) => {
         // Update optimistic message with confirmed mediaId and transition to 'sending'
         queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
           old.map((m) =>
-            m.clientMessageId === clientMessageId
+            m.clientMessageId === uniqueId || m.id === uniqueId
               ? {
                   ...m,
                   mediaId: uploadRes.mediaId,
@@ -458,7 +471,7 @@ export const useChat = (conversationId: string | undefined) => {
         // Dispatch over WebSocket
         const dispatched = realtimeService.sendChatMessage({
           conversation_id: conversationId,
-          client_message_id: clientMessageId,
+          client_message_id: uniqueId,
           type: 'voice',
           body: content,
           media_id: uploadRes.mediaId,
@@ -470,7 +483,7 @@ export const useChat = (conversationId: string | undefined) => {
           setTimeout(() => {
             queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
               old.map((m) =>
-                m.clientMessageId === clientMessageId && m.status === 'sending'
+                (m.clientMessageId === uniqueId || m.id === uniqueId) && m.status === 'sending'
                   ? { ...m, status: 'failed' }
                   : m
               )
@@ -481,7 +494,7 @@ export const useChat = (conversationId: string | undefined) => {
         console.error('Failed to upload voice message:', err);
         queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
           old.map((m) =>
-            m.clientMessageId === clientMessageId ? { ...m, status: 'failed' } : m
+            m.clientMessageId === uniqueId || m.id === uniqueId ? { ...m, status: 'failed' } : m
           )
         );
       }
@@ -612,29 +625,29 @@ export const useChat = (conversationId: string | undefined) => {
   // 11. Local reaction mutation (preserved for UI compatibility)
   const react = useCallback(
     (messageId: string, emoji: string) => {
-      queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
-        old.map((m) => {
-          if (m.id === messageId) {
-            const currentReactions = m.reactions || [];
-            const existingIndex = currentReactions.findIndex(
-              (r) => r.userId === currentUserId && r.emoji === emoji
-            );
+      const updateFn = (m: Message) => {
+        if (m.id === messageId) {
+          const currentReactions = m.reactions || [];
+          const existingIndex = currentReactions.findIndex(
+            (r) => r.userId === currentUserId && r.emoji === emoji
+          );
 
-            let newReactions;
-            if (existingIndex >= 0) {
-              newReactions = [...currentReactions];
-              newReactions.splice(existingIndex, 1);
-            } else {
-              newReactions = [
-                ...currentReactions,
-                { id: `r-${Date.now()}`, messageId, userId: currentUserId, emoji },
-              ];
-            }
-            return { ...m, reactions: newReactions };
+          let newReactions;
+          if (existingIndex >= 0) {
+            newReactions = [...currentReactions];
+            newReactions.splice(existingIndex, 1);
+          } else {
+            newReactions = [
+              ...currentReactions,
+              { id: `r-${Date.now()}`, messageId, userId: currentUserId, emoji },
+            ];
           }
-          return m;
-        })
-      );
+          return { ...m, reactions: newReactions };
+        }
+        return m;
+      };
+
+      queryClient.setQueryData<Message[]>(queryKey, (old = []) => old.map(updateFn));
     },
     [currentUserId, queryClient, queryKey]
   );
