@@ -32,14 +32,28 @@ export const SenderSummarySchema = z.object({
 });
 export type SenderSummaryDto = z.infer<typeof SenderSummarySchema>;
 
-export const ChatAckPayloadSchema = z.object({
-  client_message_id: z.string().min(1),
-  message_id: z.string().uuid(),
-  conversation_id: z.string().uuid(),
-  sequence: z.number().int().positive(),
-  created_at: z.string(),
-  status: z.literal('sent').default('sent'),
-});
+export const ChatAckPayloadSchema = z
+  .object({
+    client_message_id: z.string().optional(),
+    client_msg_id: z.string().optional(),
+    message_id: z.string().min(1),
+    conversation_id: z.string().min(1),
+    sequence: z.number().int().nonnegative().optional().default(1),
+    created_at: z.string().optional(),
+    status: z.string().optional().default('sent'),
+  })
+  .transform((data) => {
+    const clientId = data.client_message_id || data.client_msg_id || '';
+    return {
+      client_message_id: clientId,
+      client_msg_id: clientId,
+      message_id: data.message_id,
+      conversation_id: data.conversation_id,
+      sequence: data.sequence ?? 1,
+      created_at: data.created_at || new Date().toISOString(),
+      status: 'sent' as const,
+    };
+  });
 export type ChatAckPayload = z.infer<typeof ChatAckPayloadSchema>;
 
 export const ChatMessagePayloadSchema = z.object({

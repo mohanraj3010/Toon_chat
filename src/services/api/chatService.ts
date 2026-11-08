@@ -98,7 +98,8 @@ export const persistentChatService = {
     conversationId: string,
     payload: {
       content: string;
-      client_message_id: string;
+      client_message_id?: string;
+      client_msg_id?: string;
       type?: string;
       media_id?: string | null;
       media_url?: string | null;
@@ -106,21 +107,25 @@ export const persistentChatService = {
     }
   ): Promise<{
     client_message_id: string;
+    client_msg_id?: string;
     message_id: string;
     conversation_id: string;
     sequence: number;
     created_at: string;
     status: 'sent';
   }> {
+    const effectiveClientId = payload.client_message_id || payload.client_msg_id || '';
     return apiClient.post(
       `/conversations/${conversationId}/messages`,
       {
         body: payload.content,
-        client_message_id: payload.client_message_id,
+        content: payload.content,
+        client_message_id: effectiveClientId,
+        client_msg_id: effectiveClientId,
         type: payload.type || 'text',
-        media_id: payload.media_id,
-        media_url: payload.media_url,
-        reply_to_id: payload.reply_to_id,
+        media_id: payload.media_id || null,
+        media_url: payload.media_url || null,
+        reply_to_id: payload.reply_to_id || null,
       },
       { requiresAuth: true }
     );

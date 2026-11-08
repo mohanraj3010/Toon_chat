@@ -251,16 +251,18 @@ async def realtime_websocket_endpoint(
                 await connection_manager.send_envelope(websocket, pong_env)
 
             elif envelope.type == "chat.send":
+                logger.info(f"[WS chat.send] Inbound payload from user {user_id}: {envelope.payload}")
                 # Validate payload
                 try:
                     send_payload = ChatSendPayload.model_validate(envelope.payload)
-                except Exception:
+                except Exception as val_err:
+                    logger.warning(f"[WS chat.send] Validation failed: {val_err}")
                     err_env = ToonChatEnvelope(
                         type="error",
                         payload={
                             "code": RealtimeErrorCode.VALIDATION_ERROR.value,
-                            "message": "Invalid chat.send payload.",
-                            "details": {"error_subcode": "INVALID_PAYLOAD"},
+                            "message": f"Invalid chat.send payload: {val_err}",
+                            "details": {"error_subcode": "INVALID_PAYLOAD", "error": str(val_err)},
                             "echo_id": envelope.id,
                         },
                     )
@@ -293,6 +295,7 @@ async def realtime_websocket_endpoint(
                         db, user_id, send_payload
                     )
                 except MessageServiceError as mse:
+                    logger.error(f"[WS chat.send] MessageServiceError: {mse.code} - {mse.message} - {mse.details}")
                     err_env = ToonChatEnvelope(
                         type="error",
                         payload={
@@ -305,7 +308,7 @@ async def realtime_websocket_endpoint(
                     await connection_manager.send_envelope(websocket, err_env)
                     continue
                 except Exception as ex:
-                    logger.exception(f"Unexpected error allocating message: {type(ex).__name__}")
+                    logger.exception(f"[WS chat.send] Unexpected error allocating message: {ex}")
                     err_env = ToonChatEnvelope(
                         type="error",
                         payload={
@@ -321,6 +324,7 @@ async def realtime_websocket_endpoint(
                 # 1. Direct acknowledgment to sender (chat.ack)
                 ack_payload = ChatAckPayload(
                     client_message_id=result.message.client_message_id,
+                    client_msg_id=result.message.client_message_id,
                     message_id=result.message.id,
                     conversation_id=result.message.conversation_id,
                     sequence=result.message.sequence,

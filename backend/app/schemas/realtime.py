@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, Optional
 import uuid
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class RealtimeErrorCode(str, Enum):
@@ -99,12 +99,14 @@ class ErrorPayload(BaseModel):
 
 
 class ChatSendPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     conversation_id: uuid.UUID
-    client_message_id: str = Field(..., min_length=1, max_length=128)
+    client_message_id: Optional[str] = Field(None, max_length=128)
+    client_msg_id: Optional[str] = Field(None, max_length=128)
     type: str = Field("text", min_length=1, max_length=20)
-    body: str = Field(..., min_length=1, max_length=65535)
+    body: Optional[str] = Field(None, max_length=65535)
+    content: Optional[str] = Field(None, max_length=65535)
     media_id: Optional[uuid.UUID] = None
     media_url: Optional[str] = None
     reply_to_id: Optional[uuid.UUID] = None
@@ -117,16 +119,38 @@ class ChatSendPayload(BaseModel):
             raise ValueError(f"type must be one of {allowed}, got '{v}'")
         return v
 
+    @model_validator(mode="after")
+    def populate_aliases(self) -> "ChatSendPayload":
+        eff_id = self.client_message_id or self.client_msg_id
+        if not eff_id:
+            raise ValueError("client_message_id or client_msg_id is required")
+        self.client_message_id = eff_id
+        self.client_msg_id = eff_id
+
+        eff_body = self.body or self.content
+        if not eff_body:
+            raise ValueError("body or content is required")
+        self.body = eff_body
+        self.content = eff_body
+        return self
+
 
 class ChatAckPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     client_message_id: str
+    client_msg_id: Optional[str] = None
     message_id: uuid.UUID
     conversation_id: uuid.UUID
     sequence: int
     created_at: str
     status: str = "sent"
+
+    @model_validator(mode="after")
+    def populate_client_msg_id(self) -> "ChatAckPayload":
+        if not self.client_msg_id:
+            self.client_msg_id = self.client_message_id
+        return self
 
 
 class SenderSummary(BaseModel):

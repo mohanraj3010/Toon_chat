@@ -175,7 +175,10 @@ export const useChat = (conversationId: string | undefined) => {
 
     // Subscribe to ACK
     const unsubAck = realtimeService.on('chat.ack', (ack: ChatAckPayload) => {
-      if (ack.conversation_id === conversationId) {
+      console.log('[useChat] Received chat.ack frame:', ack);
+      const ackConv = String(ack.conversation_id || '').toLowerCase();
+      const currConv = String(conversationId || '').toLowerCase();
+      if (!ackConv || !currConv || ackConv === currConv) {
         reconcileAckInCache(queryClient, ack);
       }
     });
@@ -348,6 +351,13 @@ export const useChat = (conversationId: string | undefined) => {
       // Stop typing on send
       sendTyping(false);
 
+      console.log('[useChat] Dispatching chat.send:', {
+        conversationId,
+        uniqueId,
+        type,
+        body: content.trim(),
+      });
+
       // Emit chat.send frame over Realtime WebSocket
       const dispatched = realtimeService.sendChatMessage({
         conversation_id: conversationId,
@@ -362,19 +372,22 @@ export const useChat = (conversationId: string | undefined) => {
       // REST fallback to ensure guaranteed delivery and immediate resolution of optimistic state
       const sendViaRest = async () => {
         try {
+          console.log('[useChat] Invoking REST sendMessage fallback:', { conversationId, uniqueId });
           const ack = await persistentChatService.sendMessage(conversationId, {
             content: content.trim(),
             client_message_id: uniqueId,
+            client_msg_id: uniqueId,
             type,
             media_id: mediaInfo?.mediaId || null,
             media_url: mediaInfo?.mediaUrl || null,
             reply_to_id: replyToId || null,
           });
+          console.log('[useChat] REST sendMessage confirmed:', ack);
           if (ack) {
             reconcileAckInCache(queryClient, ack as any);
           }
         } catch (err) {
-          console.error('REST message dispatch failed:', err);
+          console.error('[useChat] REST message dispatch failed with error:', err);
           queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
             old.map((m) =>
               (m.clientMessageId === uniqueId || m.id === uniqueId) && m.status === 'sending'
@@ -386,6 +399,7 @@ export const useChat = (conversationId: string | undefined) => {
       };
 
       if (!dispatched) {
+        console.warn('[useChat] WebSocket not connected or send failed; falling back immediately to REST.');
         void sendViaRest();
       } else {
         setTimeout(() => {
@@ -394,6 +408,7 @@ export const useChat = (conversationId: string | undefined) => {
             (m) => (m.clientMessageId === uniqueId || m.id === uniqueId) && m.status === 'sending'
           );
           if (stillSending) {
+            console.warn('[useChat] WebSocket ACK timed out after 2500ms; falling back to REST.');
             void sendViaRest();
           }
         }, 2500);
@@ -624,7 +639,36 @@ export const useChat = (conversationId: string | undefined) => {
       );
 
       // Re-send using identical client_message_id and media attachments
-      realtimeService.sendChatMessage({
+      console.log('[useChat] Retrying message dispatch:', { conversationId, clientMessageId });
+      const retryViaRest = async () => {
+        try {
+          console.log('[useChat] Invoking REST retry fallback:', { conversationId, clientMessageId });
+          const ack = await persistentChatService.sendMessage(conversationId, {
+            content: msg.content,
+            client_message_id: clientMessageId,
+            client_msg_id: clientMessageId,
+            type: msg.type,
+            media_id: msg.mediaId || null,
+            media_url: msg.mediaUrl || null,
+            reply_to_id: msg.replyToId || null,
+          });
+          console.log('[useChat] REST retry confirmed:', ack);
+          if (ack) {
+            reconcileAckInCache(queryClient, ack as any);
+          }
+        } catch (err) {
+          console.error('[useChat] REST retry failed with error:', err);
+          queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
+            old.map((m) =>
+              (m.clientMessageId === clientMessageId || m.id === clientMessageId) && m.status === 'sending'
+                ? { ...m, status: 'failed' }
+                : m
+            )
+          );
+        }
+      };
+
+      const dispatched = realtimeService.sendChatMessage({
         conversation_id: conversationId,
         client_message_id: clientMessageId,
         type: msg.type,
@@ -633,6 +677,22 @@ export const useChat = (conversationId: string | undefined) => {
         media_url: msg.mediaUrl || null,
         reply_to_id: msg.replyToId || null,
       });
+
+      if (!dispatched) {
+        console.warn('[useChat] WebSocket offline on retry; triggering immediate REST dispatch.');
+        void retryViaRest();
+      } else {
+        setTimeout(() => {
+          const currentList = queryClient.getQueryData<Message[]>(queryKey) || [];
+          const stillSending = currentList.some(
+            (m) => (m.clientMessageId === clientMessageId || m.id === clientMessageId) && m.status === 'sending'
+          );
+          if (stillSending) {
+            console.warn('[useChat] WebSocket ACK timed out on retry; falling back to REST.');
+            void retryViaRest();
+          }
+        }, 2500);
+      }
     },
     [conversationId, queryClient, queryKey]
   );

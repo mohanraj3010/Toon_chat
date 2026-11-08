@@ -1,12 +1,13 @@
 import uuid
 from typing import Dict, List, Optional
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.core.errors import BadRequestError, NotFoundError
+from app.core.logging import get_logger
 from app.deps import get_current_user, get_db, require_active_user
 from app.models.chat import Conversation, ConversationMember, Message
 from app.models.social import Block
@@ -23,10 +24,13 @@ from app.schemas.realtime import (
     ChatAckPayload,
     ChatMessagePayload,
     ChatSendPayload,
+    RealtimeErrorCode,
     ToonChatEnvelope,
 )
 from app.services.auth_service import AuthService
-from app.services.message_service import message_service
+from app.services.message_service import MessageServiceError, message_service
+
+logger = get_logger("toonchat.api.conversations")
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
@@ -383,14 +387,31 @@ async def get_conversation_messages(
 
 
 class MessageCreateRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
-    client_message_id: str = Field(..., min_length=1, max_length=128)
-    body: str = Field(..., min_length=1, max_length=65535)
+    client_message_id: Optional[str] = Field(None, max_length=128)
+    client_msg_id: Optional[str] = Field(None, max_length=128)
+    body: Optional[str] = Field(None, max_length=65535)
+    content: Optional[str] = Field(None, max_length=65535)
     type: str = Field("text", min_length=1, max_length=20)
     media_id: Optional[uuid.UUID] = None
     media_url: Optional[str] = None
     reply_to_id: Optional[uuid.UUID] = None
+
+    @model_validator(mode="after")
+    def populate_aliases(self) -> "MessageCreateRequest":
+        eff_id = self.client_message_id or self.client_msg_id
+        if not eff_id:
+            raise ValueError("client_message_id or client_msg_id is required")
+        self.client_message_id = eff_id
+        self.client_msg_id = eff_id
+
+        eff_body = self.body or self.content
+        if not eff_body:
+            raise ValueError("body or content is required")
+        self.body = eff_body
+        self.content = eff_body
+        return self
 
 
 @router.post(
@@ -415,21 +436,50 @@ async def send_conversation_message(
     Performs monotonic sequence allocation, transactional database insertion,
     conversation metadata update, and realtime WebSocket fan-out to participants.
     """
-    send_payload = ChatSendPayload(
-        conversation_id=conversation_id,
-        client_message_id=req.client_message_id,
-        type=req.type,
-        body=req.body,
-        media_id=req.media_id,
-        media_url=req.media_url,
-        reply_to_id=req.reply_to_id,
-    )
+    try:
+        logger.info(
+            f"[REST sendMessage] Processing send for conversation={conversation_id}, "
+            f"user={current_user.id}, client_message_id={req.client_message_id}"
+        )
+        send_payload = ChatSendPayload(
+            conversation_id=conversation_id,
+            client_message_id=req.client_message_id,
+            client_msg_id=req.client_message_id,
+            type=req.type,
+            body=req.body,
+            content=req.body,
+            media_id=req.media_id,
+            media_url=req.media_url,
+            reply_to_id=req.reply_to_id,
+        )
 
-    result = await message_service.allocate_and_insert_message(
-        db=db,
-        sender_id=current_user.id,
-        payload=send_payload,
-    )
+        result = await message_service.allocate_and_insert_message(
+            db=db,
+            sender_id=current_user.id,
+            payload=send_payload,
+        )
+    except MessageServiceError as mse:
+        logger.error(
+            f"[REST sendMessage] MessageServiceError: code={mse.code.value}, "
+            f"message={mse.message}, details={mse.details}"
+        )
+        status_code = status.HTTP_400_BAD_REQUEST
+        if mse.code == RealtimeErrorCode.RESOURCE_NOT_FOUND:
+            status_code = status.HTTP_404_NOT_FOUND
+        elif mse.code in (RealtimeErrorCode.FORBIDDEN, RealtimeErrorCode.USER_BLOCKED):
+            status_code = status.HTTP_403_FORBIDDEN
+        elif mse.code == RealtimeErrorCode.CONFLICT:
+            status_code = status.HTTP_409_CONFLICT
+        raise HTTPException(
+            status_code=status_code,
+            detail={"code": mse.code.value, "message": mse.message, "details": mse.details},
+        )
+    except Exception as exc:
+        logger.exception(f"[REST sendMessage] Unhandled database/server error: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while saving message: {str(exc)}",
+        )
 
     if not result.is_retry:
         broadcast_payload = ChatMessagePayload(
@@ -453,11 +503,12 @@ async def send_conversation_message(
         for member_uid in result.member_user_ids:
             try:
                 await connection_manager.broadcast_to_user(member_uid, broadcast_env)
-            except Exception:
-                pass
+            except Exception as b_err:
+                logger.warning(f"Error broadcasting message to member {member_uid}: {b_err}")
 
     return ChatAckPayload(
         client_message_id=result.message.client_message_id,
+        client_msg_id=result.message.client_message_id,
         message_id=result.message.id,
         conversation_id=result.message.conversation_id,
         sequence=result.message.sequence,

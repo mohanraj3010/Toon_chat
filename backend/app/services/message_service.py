@@ -326,8 +326,9 @@ class MessageService:
         try:
             await db.commit()
             await db.refresh(new_message)
-        except IntegrityError:
+        except IntegrityError as ie:
             await db.rollback()
+            logger.exception(f"[MessageService] Database integrity conflict on message commit: {ie}")
             # DEFECT B Fix: Handle concurrent race on (sender_id, client_message_id)
             existing_retry = await self._get_existing_by_client_msg_id(
                 db, sender_id, payload.client_message_id
@@ -364,13 +365,16 @@ class MessageService:
                     is_retry=True,
                 )
 
-            # DEFECT A Fix: Never expose raw str(ie) or SQL details to client
-            logger.error("Database integrity conflict occurred during message insertion.")
+            logger.error(f"[MessageService] Unrecoverable database integrity error: {ie}")
             raise MessageServiceError(
                 code=RealtimeErrorCode.CONFLICT,
                 message="Database integrity conflict during message insertion.",
-                details={"error_subcode": "INTEGRITY_CONFLICT"},
+                details={"error_subcode": "INTEGRITY_CONFLICT", "error": str(ie)},
             )
+        except Exception as ex:
+            await db.rollback()
+            logger.exception(f"[MessageService] Unexpected database error on message commit: {ex}")
+            raise
 
         sender_summary = await self._get_sender_summary(db, sender_id)
         return MessageAllocationResult(

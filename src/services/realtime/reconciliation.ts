@@ -59,13 +59,15 @@ export function reconcileAckInCache(
   queryClient: QueryClient,
   ack: ChatAckPayload
 ): void {
-  const queryKey = ['messages', ack.conversation_id];
+  const targetClientId = (ack as any).client_message_id || (ack as any).client_msg_id;
+  const conversationId = ack.conversation_id;
 
-  queryClient.setQueryData<Message[]>(queryKey, (oldMessages = []) => {
+  const reconcileList = (oldMessages: Message[] = []): Message[] => {
     let matched = false;
 
     const updated = oldMessages.map((m) => {
       const isMatch =
+        (targetClientId && (m.clientMessageId === targetClientId || m.id === targetClientId)) ||
         m.clientMessageId === ack.client_message_id ||
         m.id === ack.client_message_id;
 
@@ -79,7 +81,7 @@ export function reconcileAckInCache(
         ...m,
         id: ack.message_id,
         sequence: ack.sequence,
-        createdAt: ack.created_at,
+        createdAt: ack.created_at || m.createdAt,
         status: newStatus,
       };
     });
@@ -90,7 +92,20 @@ export function reconcileAckInCache(
     }
 
     return sortAndDeduplicateMessages(updated);
-  });
+  };
+
+  // Direct query update
+  queryClient.setQueryData<Message[]>(['messages', conversationId], reconcileList);
+
+  // Cross-casing query cache update to prevent UUID casing mismatches
+  const queryCache = queryClient.getQueryCache();
+  const allMessageQueries = queryCache.findAll({ queryKey: ['messages'] });
+  for (const q of allMessageQueries) {
+    const keyConv = q.queryKey[1];
+    if (keyConv && String(keyConv).toLowerCase() === String(conversationId).toLowerCase()) {
+      queryClient.setQueryData<Message[]>(q.queryKey, reconcileList);
+    }
+  }
 }
 
 /**
