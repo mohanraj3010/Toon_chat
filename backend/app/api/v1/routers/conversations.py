@@ -5,17 +5,25 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from pydantic import BaseModel, ConfigDict, Field
 from app.core.errors import BadRequestError, NotFoundError
 from app.deps import get_current_user, get_db, require_active_user
 from app.models.chat import Conversation, ConversationMember, Message
 from app.models.social import Block
 from app.models.user import User
+from app.realtime.connection_manager import connection_manager
 from app.schemas.chat import (
     ConversationCreateRequest,
     ConversationLastMessage,
     ConversationMessagesResponse,
     ConversationParticipant,
     ConversationSummaryResponse,
+)
+from app.schemas.realtime import (
+    ChatAckPayload,
+    ChatMessagePayload,
+    ChatSendPayload,
+    ToonChatEnvelope,
 )
 from app.services.auth_service import AuthService
 from app.services.message_service import message_service
@@ -371,4 +379,88 @@ async def get_conversation_messages(
         after_seq=after_seq,
         before_seq=before_seq,
         limit=limit,
+    )
+
+
+class MessageCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_message_id: str = Field(..., min_length=1, max_length=128)
+    body: str = Field(..., min_length=1, max_length=65535)
+    type: str = Field("text", min_length=1, max_length=20)
+    media_id: Optional[uuid.UUID] = None
+    media_url: Optional[str] = None
+    reply_to_id: Optional[uuid.UUID] = None
+
+
+@router.post(
+    "/{conversation_id}/messages",
+    response_model=ChatAckPayload,
+    status_code=status.HTTP_201_CREATED,
+)
+@router.post(
+    "/{conversation_id}/messages/",
+    response_model=ChatAckPayload,
+    status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,
+)
+async def send_conversation_message(
+    conversation_id: uuid.UUID,
+    req: MessageCreateRequest,
+    current_user: User = Depends(require_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> ChatAckPayload:
+    """
+    Authoritative REST message creation endpoint.
+    Performs monotonic sequence allocation, transactional database insertion,
+    conversation metadata update, and realtime WebSocket fan-out to participants.
+    """
+    send_payload = ChatSendPayload(
+        conversation_id=conversation_id,
+        client_message_id=req.client_message_id,
+        type=req.type,
+        body=req.body,
+        media_id=req.media_id,
+        media_url=req.media_url,
+        reply_to_id=req.reply_to_id,
+    )
+
+    result = await message_service.allocate_and_insert_message(
+        db=db,
+        sender_id=current_user.id,
+        payload=send_payload,
+    )
+
+    if not result.is_retry:
+        broadcast_payload = ChatMessagePayload(
+            id=result.message.id,
+            conversation_id=result.message.conversation_id,
+            sender_id=result.message.sender_id,
+            sequence=result.message.sequence,
+            client_message_id=result.message.client_message_id,
+            type=result.message.type,
+            body=result.message.body,
+            media_id=result.message.media_id,
+            media_url=result.message.media_url,
+            reply_to_id=result.message.reply_to_id,
+            created_at=result.message.created_at.isoformat(),
+            sender=result.sender_summary,
+        )
+        broadcast_env = ToonChatEnvelope(
+            type="chat.message",
+            payload=broadcast_payload.model_dump(mode="json"),
+        )
+        for member_uid in result.member_user_ids:
+            try:
+                await connection_manager.broadcast_to_user(member_uid, broadcast_env)
+            except Exception:
+                pass
+
+    return ChatAckPayload(
+        client_message_id=result.message.client_message_id,
+        message_id=result.message.id,
+        conversation_id=result.message.conversation_id,
+        sequence=result.message.sequence,
+        created_at=result.message.created_at.isoformat(),
+        status="sent",
     )

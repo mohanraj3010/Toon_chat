@@ -69,6 +69,23 @@ async def issue_realtime_ticket(
     )
 
 
+def is_allowed_websocket_origin(origin: Optional[str]) -> bool:
+    if not origin:
+        return True
+    allowed_origins = set(settings.CORS_ORIGINS)
+    if "*" in allowed_origins or "*" in settings.ALLOWED_HOSTS:
+        return True
+    if origin in allowed_origins or origin in {"http://testserver", "https://testserver"}:
+        return True
+    # Allow all Vercel domains (production & preview branches, e.g. toon-chat-epdr.vercel.app)
+    if origin.startswith("https://") and (".vercel.app" in origin):
+        return True
+    # Allow localhost dev ports
+    if origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:"):
+        return True
+    return False
+
+
 @router.websocket("/ws")
 async def realtime_websocket_endpoint(
     websocket: WebSocket,
@@ -88,11 +105,7 @@ async def realtime_websocket_endpoint(
     """
     # Step 0: Origin verification to prevent Cross-Site WebSocket Hijacking (CSWSH)
     origin = websocket.headers.get("origin")
-    allowed_origins = set(settings.CORS_ORIGINS)
-    allowed_origins.add("http://testserver")
-    allowed_origins.add("https://testserver")
-
-    if origin and origin not in allowed_origins and "*" not in allowed_origins:
+    if origin and not is_allowed_websocket_origin(origin):
         logger.warning(f"Rejected WebSocket handshake: unauthorized origin '{origin}'")
         await websocket.close(
             code=RealtimeCloseCode.FORBIDDEN_USER.value,

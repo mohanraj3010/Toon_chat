@@ -89,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               expires_at: data.session.expires_at || 0,
               user: finalUser,
             });
+            realtimeService.connect();
           }
         }
       } catch (err) {
@@ -154,6 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 expires_at: newSession.expires_at || 0,
                 user: finalUser,
               });
+              realtimeService.connect();
             }
           } catch {
             if (isMounted) {
@@ -170,6 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 expires_at: newSession.expires_at || 0,
                 user: fallbackUser,
               });
+              realtimeService.connect();
             }
           }
         }

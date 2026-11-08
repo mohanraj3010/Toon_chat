@@ -359,9 +359,22 @@ export const useChat = (conversationId: string | undefined) => {
         reply_to_id: replyToId || null,
       });
 
-      // If socket is offline and queue is saturated, or error happens, mark as failed after timeout
-      if (!dispatched && realtimeService.getStatus() === 'offline') {
-        setTimeout(() => {
+      // REST fallback to ensure guaranteed delivery and immediate resolution of optimistic state
+      const sendViaRest = async () => {
+        try {
+          const ack = await persistentChatService.sendMessage(conversationId, {
+            content: content.trim(),
+            client_message_id: uniqueId,
+            type,
+            media_id: mediaInfo?.mediaId || null,
+            media_url: mediaInfo?.mediaUrl || null,
+            reply_to_id: replyToId || null,
+          });
+          if (ack) {
+            reconcileAckInCache(queryClient, ack as any);
+          }
+        } catch (err) {
+          console.error('REST message dispatch failed:', err);
           queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
             old.map((m) =>
               (m.clientMessageId === uniqueId || m.id === uniqueId) && m.status === 'sending'
@@ -369,7 +382,21 @@ export const useChat = (conversationId: string | undefined) => {
                 : m
             )
           );
-        }, 8000);
+        }
+      };
+
+      if (!dispatched) {
+        void sendViaRest();
+      } else {
+        setTimeout(() => {
+          const currentList = queryClient.getQueryData<Message[]>(queryKey) || [];
+          const stillSending = currentList.some(
+            (m) => (m.clientMessageId === uniqueId || m.id === uniqueId) && m.status === 'sending'
+          );
+          if (stillSending) {
+            void sendViaRest();
+          }
+        }, 2500);
       }
     },
     [conversationId, currentUserId, queryClient, queryKey, sendTyping]
@@ -479,8 +506,21 @@ export const useChat = (conversationId: string | undefined) => {
           reply_to_id: null,
         });
 
-        if (!dispatched && realtimeService.getStatus() === 'offline') {
-          setTimeout(() => {
+        const sendVoiceViaRest = async () => {
+          try {
+            const ack = await persistentChatService.sendMessage(conversationId, {
+              content,
+              client_message_id: uniqueId,
+              type: 'voice',
+              media_id: uploadRes.mediaId,
+              media_url: `/api/v1/media/${uploadRes.mediaId}/url`,
+              reply_to_id: null,
+            });
+            if (ack) {
+              reconcileAckInCache(queryClient, ack as any);
+            }
+          } catch (err) {
+            console.error('REST voice message dispatch failed:', err);
             queryClient.setQueryData<Message[]>(queryKey, (old = []) =>
               old.map((m) =>
                 (m.clientMessageId === uniqueId || m.id === uniqueId) && m.status === 'sending'
@@ -488,7 +528,21 @@ export const useChat = (conversationId: string | undefined) => {
                   : m
               )
             );
-          }, 8000);
+          }
+        };
+
+        if (!dispatched) {
+          void sendVoiceViaRest();
+        } else {
+          setTimeout(() => {
+            const currentList = queryClient.getQueryData<Message[]>(queryKey) || [];
+            const stillSending = currentList.some(
+              (m) => (m.clientMessageId === uniqueId || m.id === uniqueId) && m.status === 'sending'
+            );
+            if (stillSending) {
+              void sendVoiceViaRest();
+            }
+          }, 2500);
         }
       } catch (err) {
         console.error('Failed to upload voice message:', err);

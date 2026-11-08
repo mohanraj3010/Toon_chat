@@ -89,4 +89,40 @@ export const persistentChatService = {
       throw err;
     }
   },
+
+  /**
+   * Dispatches a message to the backend via authoritative REST endpoint.
+   * Guarantees message persistence and returns sequence-allocated ACK.
+   */
+  async sendMessage(
+    conversationId: string,
+    payload: {
+      content: string;
+      client_message_id: string;
+      type?: string;
+      media_id?: string | null;
+      media_url?: string | null;
+      reply_to_id?: string | null;
+    }
+  ): Promise<{
+    client_message_id: string;
+    message_id: string;
+    conversation_id: string;
+    sequence: number;
+    created_at: string;
+    status: 'sent';
+  }> {
+    return apiClient.post(
+      `/conversations/${conversationId}/messages`,
+      {
+        body: payload.content,
+        client_message_id: payload.client_message_id,
+        type: payload.type || 'text',
+        media_id: payload.media_id,
+        media_url: payload.media_url,
+        reply_to_id: payload.reply_to_id,
+      },
+      { requiresAuth: true }
+    );
+  },
 };
