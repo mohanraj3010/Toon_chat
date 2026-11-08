@@ -459,6 +459,7 @@ async def send_conversation_message(
             payload=send_payload,
         )
     except MessageServiceError as mse:
+        await db.rollback()
         logger.error(
             f"[REST sendMessage] MessageServiceError: code={mse.code.value}, "
             f"message={mse.message}, details={mse.details}"
@@ -475,6 +476,7 @@ async def send_conversation_message(
             detail={"code": mse.code.value, "message": mse.message, "details": mse.details},
         )
     except Exception as exc:
+        await db.rollback()
         logger.exception(f"[REST sendMessage] Unhandled database/server error: {exc}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

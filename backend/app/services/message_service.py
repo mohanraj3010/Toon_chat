@@ -282,48 +282,64 @@ class MessageService:
         now = datetime.now(timezone.utc)
         new_msg_id = uuid.uuid4()
 
-        update_stmt = (
-            update(Conversation)
-            .where(
-                Conversation.id == payload.conversation_id,
-                Conversation.deleted_at.is_(None),
+        try:
+            # 6a. Allocate monotonic sequence number first (locks the conversation row)
+            # Notice: last_message_id is NOT updated here to prevent foreign key violation fk_conversations_last_message
+            seq_stmt = (
+                update(Conversation)
+                .where(
+                    Conversation.id == payload.conversation_id,
+                    Conversation.deleted_at.is_(None),
+                )
+                .values(
+                    message_seq_counter=Conversation.message_seq_counter + 1,
+                )
+                .returning(Conversation.message_seq_counter)
             )
-            .values(
-                message_seq_counter=Conversation.message_seq_counter + 1,
-                last_message_id=new_msg_id,
-                last_message_at=now,
+            seq_res = await db.execute(seq_stmt)
+            new_seq = seq_res.scalar_one_or_none()
+            if new_seq is None:
+                raise MessageServiceError(
+                    code=RealtimeErrorCode.RESOURCE_NOT_FOUND,
+                    message="Conversation not found or access denied.",
+                    details={"error_subcode": "CONVERSATION_NOT_FOUND"},
+                )
+
+            # 6b. Insert message row FIRST so foreign key constraint fk_conversations_last_message is satisfied
+            new_message = Message(
+                id=new_msg_id,
+                conversation_id=payload.conversation_id,
+                sender_id=sender_id,
+                sequence=new_seq,
+                client_message_id=payload.client_message_id,
+                type=payload.type,
+                body=payload.body,
+                media_id=payload.media_id,
+                media_url=resolved_media_url,
+                reply_to_id=payload.reply_to_id,
+                is_edited=False,
+                is_deleted=False,
+                created_at=now,
                 updated_at=now,
             )
-            .returning(Conversation.message_seq_counter)
-        )
-        update_res = await db.execute(update_stmt)
-        new_seq = update_res.scalar_one_or_none()
-        if new_seq is None:
-            raise MessageServiceError(
-                code=RealtimeErrorCode.RESOURCE_NOT_FOUND,
-                message="Conversation not found or access denied.",
-                details={"error_subcode": "CONVERSATION_NOT_FOUND"},
+            db.add(new_message)
+            await db.flush()
+
+            # 6c. Update conversation's last_message_id and timestamps SECOND now that message row exists
+            update_last_msg_stmt = (
+                update(Conversation)
+                .where(
+                    Conversation.id == payload.conversation_id,
+                    Conversation.deleted_at.is_(None),
+                )
+                .values(
+                    last_message_id=new_msg_id,
+                    last_message_at=now,
+                    updated_at=now,
+                )
             )
+            await db.execute(update_last_msg_stmt)
 
-        new_message = Message(
-            id=new_msg_id,
-            conversation_id=payload.conversation_id,
-            sender_id=sender_id,
-            sequence=new_seq,
-            client_message_id=payload.client_message_id,
-            type=payload.type,
-            body=payload.body,
-            media_id=payload.media_id,
-            media_url=resolved_media_url,
-            reply_to_id=payload.reply_to_id,
-            is_edited=False,
-            is_deleted=False,
-            created_at=now,
-            updated_at=now,
-        )
-        db.add(new_message)
-
-        try:
             await db.commit()
             await db.refresh(new_message)
         except IntegrityError as ie:
@@ -371,6 +387,9 @@ class MessageService:
                 message="Database integrity conflict during message insertion.",
                 details={"error_subcode": "INTEGRITY_CONFLICT", "error": str(ie)},
             )
+        except MessageServiceError:
+            await db.rollback()
+            raise
         except Exception as ex:
             await db.rollback()
             logger.exception(f"[MessageService] Unexpected database error on message commit: {ex}")

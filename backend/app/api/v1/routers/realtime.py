@@ -295,6 +295,7 @@ async def realtime_websocket_endpoint(
                         db, user_id, send_payload
                     )
                 except MessageServiceError as mse:
+                    await db.rollback()
                     logger.error(f"[WS chat.send] MessageServiceError: {mse.code} - {mse.message} - {mse.details}")
                     err_env = ToonChatEnvelope(
                         type="error",
@@ -308,6 +309,7 @@ async def realtime_websocket_endpoint(
                     await connection_manager.send_envelope(websocket, err_env)
                     continue
                 except Exception as ex:
+                    await db.rollback()
                     logger.exception(f"[WS chat.send] Unexpected error allocating message: {ex}")
                     err_env = ToonChatEnvelope(
                         type="error",
@@ -388,6 +390,7 @@ async def realtime_websocket_endpoint(
                         db, user_id, read_payload
                     )
                 except MessageServiceError as mse:
+                    await db.rollback()
                     err_env = ToonChatEnvelope(
                         type="error",
                         payload={
@@ -400,6 +403,7 @@ async def realtime_websocket_endpoint(
                     await connection_manager.send_envelope(websocket, err_env)
                     continue
                 except Exception as ex:
+                    await db.rollback()
                     logger.exception(f"Unexpected error processing chat.read: {type(ex).__name__}")
                     err_env = ToonChatEnvelope(
                         type="error",
@@ -456,6 +460,7 @@ async def realtime_websocket_endpoint(
                         db, user_id, typing_payload
                     )
                 except MessageServiceError as mse:
+                    await db.rollback()
                     err_env = ToonChatEnvelope(
                         type="error",
                         payload={
@@ -468,6 +473,7 @@ async def realtime_websocket_endpoint(
                     await connection_manager.send_envelope(websocket, err_env)
                     continue
                 except Exception as ex:
+                    await db.rollback()
                     logger.exception(f"Unexpected error processing chat.typing: {type(ex).__name__}")
                     err_env = ToonChatEnvelope(
                         type="error",
