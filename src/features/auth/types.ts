@@ -85,8 +85,11 @@ export interface AuthUser {
 
 export interface AuthSession {
   accessToken: string;
+  access_token?: string;
   refreshToken?: string;
+  refresh_token?: string;
   expiresAt: number;
+  expires_at?: number;
   user: AuthUser;
 }
 

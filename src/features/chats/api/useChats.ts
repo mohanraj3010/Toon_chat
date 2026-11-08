@@ -18,10 +18,12 @@ export const conversationKeys = {
  */
 export const useConversations = () => {
   const { user, session } = useAuth();
+  const token = (session as any)?.access_token || session?.accessToken;
+
   return useQuery<UIChat[], Error>({
     queryKey: conversationKeys.user(user?.id),
-    queryFn: () => conversationService.getConversations(session?.accessToken),
-    enabled: Boolean(user && session?.accessToken),
+    queryFn: () => conversationService.getConversations(token),
+    enabled: Boolean(user),
   });
 };
 
@@ -31,10 +33,11 @@ export const useConversations = () => {
 export const useCreateConversation = () => {
   const queryClient = useQueryClient();
   const { user, session } = useAuth();
+  const token = (session as any)?.access_token || session?.accessToken;
 
   return useMutation<UIChat, Error, string>({
     mutationFn: (targetUserId: string) =>
-      conversationService.createDirectConversation(targetUserId, session?.accessToken),
+      conversationService.createDirectConversation(targetUserId, token),
     onSuccess: (newChat) => {
       // Invalidate and optimistically populate conversations list
       queryClient.setQueryData<UIChat[]>(conversationKeys.user(user?.id), (old) => {
@@ -55,10 +58,12 @@ export const useCreateConversation = () => {
  */
 export const useSearchUsers = (query: string, enabled = true) => {
   const { user, session } = useAuth();
+  const token = (session as any)?.access_token || session?.accessToken;
+
   return useQuery<UserSearchItem[], Error>({
     queryKey: ['users', 'search', query],
-    queryFn: () => conversationService.searchUsers(query, session?.accessToken),
+    queryFn: () => conversationService.searchUsers(query, token),
     staleTime: 1000 * 30, // 30 seconds
-    enabled: Boolean(user && session?.accessToken && enabled),
+    enabled: Boolean(user && enabled),
   });
 };

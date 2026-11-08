@@ -50,10 +50,17 @@ async def get_current_user_optional(
     Optionally extracts and verifies Supabase JWT if an Authorization header is provided.
     Returns None if no header is present or if user does not exist in local DB.
     """
-    if not authorization or not authorization.startswith("Bearer "):
+    if not authorization:
         return None
 
-    token = authorization.split(" ")[1].strip()
+    cleaned_auth = authorization.strip()
+    parts = cleaned_auth.split(None, 1)
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+
+    token = parts[1].strip()
+    if not token:
+        return None
     try:
         payload = verify_supabase_jwt(token)
         user_id_str = payload.get("sub")

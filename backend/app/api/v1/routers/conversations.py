@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.errors import BadRequestError, NotFoundError
-from app.deps import get_db, require_active_user
+from app.deps import get_current_user, get_db, require_active_user
 from app.models.chat import Conversation, ConversationMember, Message
 from app.models.social import Block
 from app.models.user import User

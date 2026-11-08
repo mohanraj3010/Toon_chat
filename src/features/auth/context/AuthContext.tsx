@@ -18,8 +18,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sync active token to HTTP client whenever session changes
   useEffect(() => {
-    setActiveToken(session?.accessToken || null);
-  }, [session?.accessToken]);
+    const activeJwt = session?.accessToken || session?.access_token || null;
+    setActiveToken(activeJwt);
+  }, [session?.accessToken, session?.access_token]);
 
   // Clean cache and reset state on logout
   const handlePurgeState = useCallback(() => {
@@ -69,6 +70,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             createdAt: data.session.user.created_at || new Date().toISOString(),
           };
 
+          if (data.session.access_token) {
+            setActiveToken(data.session.access_token);
+          }
+
           const authUser = await authService.getCurrentUser().catch(() => null);
           const finalUser = authUser || fallbackUser;
 
@@ -77,8 +82,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(finalUser);
             setSession({
               accessToken: data.session.access_token,
+              access_token: data.session.access_token,
               refreshToken: data.session.refresh_token,
+              refresh_token: data.session.refresh_token,
               expiresAt: data.session.expires_at || 0,
+              expires_at: data.session.expires_at || 0,
               user: finalUser,
             });
           }
@@ -133,21 +141,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const authUser = await authService.getCurrentUser().catch(() => null);
             const finalUser = authUser || fallbackUser;
             if (isMounted) {
+              if (newSession.access_token) {
+                setActiveToken(newSession.access_token);
+              }
               setUser(finalUser);
               setSession({
                 accessToken: newSession.access_token,
+                access_token: newSession.access_token,
                 refreshToken: newSession.refresh_token,
+                refresh_token: newSession.refresh_token,
                 expiresAt: newSession.expires_at || 0,
+                expires_at: newSession.expires_at || 0,
                 user: finalUser,
               });
             }
           } catch {
             if (isMounted) {
+              if (newSession.access_token) {
+                setActiveToken(newSession.access_token);
+              }
               setUser(fallbackUser);
               setSession({
                 accessToken: newSession.access_token,
+                access_token: newSession.access_token,
                 refreshToken: newSession.refresh_token,
+                refresh_token: newSession.refresh_token,
                 expiresAt: newSession.expires_at || 0,
+                expires_at: newSession.expires_at || 0,
                 user: fallbackUser,
               });
             }

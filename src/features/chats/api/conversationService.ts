@@ -52,8 +52,8 @@ export const conversationService = {
    */
   async getConversations(token?: string): Promise<UIChat[]> {
     const options: RequestOptions = { requiresAuth: true };
-    if (token) {
-      options.token = token;
+    if (token && typeof token === 'string' && token.trim()) {
+      options.token = token.trim();
     }
     const data = await apiClient.get<UIChat[]>('/conversations', options);
     return Array.isArray(data) ? data : [];
@@ -64,8 +64,8 @@ export const conversationService = {
    */
   async createDirectConversation(targetUserId: string, token?: string): Promise<UIChat> {
     const options: RequestOptions = { requiresAuth: true };
-    if (token) {
-      options.token = token;
+    if (token && typeof token === 'string' && token.trim()) {
+      options.token = token.trim();
     }
     return apiClient.post<UIChat>(
       '/conversations',
@@ -81,8 +81,8 @@ export const conversationService = {
     const cleanQuery = query?.trim();
     const endpoint = cleanQuery ? `/users?q=${encodeURIComponent(cleanQuery)}` : '/users';
     const options: RequestOptions = { requiresAuth: true };
-    if (token) {
-      options.token = token;
+    if (token && typeof token === 'string' && token.trim()) {
+      options.token = token.trim();
     }
     const data = await apiClient.get<UserSearchItem[]>(endpoint, options);
     return Array.isArray(data) ? data : [];

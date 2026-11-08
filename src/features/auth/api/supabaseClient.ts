@@ -347,11 +347,15 @@ class LocalSupabaseAuthClient {
 }
 
 // Instantiate either real Supabase client or local emulator
+// In test environments (Vitest), we use the local emulator so tests stay hermetic and fast.
+// In production or development with valid credentials, instantiate the real Supabase client.
+const isTestEnv = typeof process !== 'undefined' && Boolean(process.env?.NODE_ENV === 'test' || process.env?.VITEST);
+
 const isRealSupabaseConfigured = Boolean(
+  !isTestEnv &&
   SUPABASE_URL &&
-    SUPABASE_ANON_KEY &&
-    !SUPABASE_URL.includes('placeholder') &&
-    !SUPABASE_URL.includes('nuvccdwimkebdnmsabnd')
+  SUPABASE_ANON_KEY &&
+  !SUPABASE_URL.includes('placeholder')
 );
 
 export const supabase: SupabaseClient | { auth: LocalSupabaseAuthClient } = isRealSupabaseConfigured

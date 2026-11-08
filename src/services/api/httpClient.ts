@@ -159,42 +159,44 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-async function getAccessToken(): Promise<string | null> {
-  // 1. Explicit active token set from AuthContext
-  if (activeToken) {
-    if (!isTokenExpired(activeToken)) {
-      return activeToken;
+export async function getAccessToken(): Promise<string | null> {
+  // 1. Authoritative active Supabase session via supabase.auth.getSession()
+  try {
+    const { data } = await supabase.auth.getSession();
+    const sessionToken = data?.session?.access_token || (data?.session as unknown as { accessToken?: string })?.accessToken;
+    if (sessionToken && typeof sessionToken === 'string' && sessionToken.trim()) {
+      if (!isTokenExpired(sessionToken.trim())) {
+        activeToken = sessionToken.trim();
+        return activeToken;
+      }
+    }
+  } catch {
+    // continue to fallbacks
+  }
+
+  // 2. In-memory active token synchronized from AuthContext
+  if (activeToken && typeof activeToken === 'string' && activeToken.trim()) {
+    if (!isTokenExpired(activeToken.trim())) {
+      return activeToken.trim();
     }
   }
 
-  // 2. Dynamic provider if registered
+  // 3. Dynamic token provider if registered
   if (activeTokenProvider) {
     try {
       const provided = await activeTokenProvider();
-      if (provided && !isTokenExpired(provided)) {
-        return provided;
+      if (provided && typeof provided === 'string' && provided.trim() && !isTokenExpired(provided.trim())) {
+        return provided.trim();
       }
     } catch {
       // continue
     }
   }
 
-  // 3. Supabase Auth getSession()
-  try {
-    const { data } = await supabase.auth.getSession();
-    if (data.session?.access_token) {
-      if (!isTokenExpired(data.session.access_token)) {
-        return data.session.access_token;
-      }
-    }
-  } catch {
-    // continue
-  }
-
-  // 4. Fallback: inspect localStorage and sessionStorage
+  // 4. Stored session token from storage (localStorage / sessionStorage)
   const storedToken = extractTokenFromStorage();
-  if (storedToken && !isTokenExpired(storedToken)) {
-    return storedToken;
+  if (storedToken && typeof storedToken === 'string' && storedToken.trim() && !isTokenExpired(storedToken.trim())) {
+    return storedToken.trim();
   }
 
   return null;
@@ -250,22 +252,37 @@ export async function request<T = unknown>(
 
   // Inject Bearer token if required
   if (requiresAuth) {
-    if (explicitToken) {
-      // Use caller-provided token directly
-      headers.set('Authorization', `Bearer ${explicitToken}`);
-    } else if (!headers.has('Authorization')) {
-      // Resolve from active state, Supabase session, or storage
-      let token = await getAccessToken();
-      if (!token) {
-        token = await refreshAccessToken();
+    let bearerToken: string | null = null;
+
+    // Check if customHeaders already has Authorization
+    if (headers.has('Authorization')) {
+      const authHeader = headers.get('Authorization') || '';
+      if (authHeader.toLowerCase().startsWith('bearer ') && authHeader.slice(7).trim()) {
+        bearerToken = authHeader.slice(7).trim();
       }
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      } else {
-        console.warn(
-          `[httpClient] Protected request to '${endpoint}' initiated without session token. Checked Supabase session, active state, and storage.`
-        );
+    }
+
+    // Check caller-provided explicit token
+    if (!bearerToken && explicitToken && typeof explicitToken === 'string' && explicitToken.trim()) {
+      if (!isTokenExpired(explicitToken.trim())) {
+        bearerToken = explicitToken.trim();
       }
+    }
+
+    // Retrieve active session token using supabase.auth.getSession() (with activeToken / storage fallbacks)
+    if (!bearerToken) {
+      bearerToken = await getAccessToken();
+      if (!bearerToken) {
+        bearerToken = await refreshAccessToken();
+      }
+    }
+
+    if (bearerToken) {
+      headers.set('Authorization', `Bearer ${bearerToken}`);
+    } else {
+      console.warn(
+        `[httpClient] Protected request to '${endpoint}' initiated without session token. Checked Supabase session, active state, and storage.`
+      );
     }
   }
 
